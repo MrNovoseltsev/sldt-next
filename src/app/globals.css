@@ -1,64 +1,49 @@
 @import "tailwindcss";
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.13 0.028 261.692);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.13 0.028 261.692);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.13 0.028 261.692);
-  --primary: oklch(0.21 0.034 264.665);
-  --primary-foreground: oklch(0.985 0.002 247.858);
-  --secondary: oklch(0.967 0.003 264.542);
-  --secondary-foreground: oklch(0.21 0.034 264.665);
-  --muted: oklch(0.967 0.003 264.542);
-  --muted-foreground: oklch(0.551 0.018 264.364);
-  --accent: oklch(0.967 0.003 264.542);
-  --accent-foreground: oklch(0.21 0.034 264.665);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0.002 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --radius: 0.5rem;
-  --sidebar: oklch(0.985 0.002 247.858);
-  --sidebar-foreground: oklch(0.13 0.028 261.692);
-  --sidebar-primary: oklch(0.21 0.034 264.665);
-  --sidebar-primary-foreground: oklch(0.985 0.002 247.858);
-  --sidebar-accent: oklch(0.967 0.003 264.542);
-  --sidebar-accent-foreground: oklch(0.21 0.034 264.665);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
-}
+  /* Design system tokens (from templates) */
+  --bg: #f9f9f8;
+  --surface: #ffffff;
+  --border: #e5e4e0;
+  --border-light: #f0eeea;
+  --text-1: #181816;
+  --text-2: #6a6a65;
+  --text-3: #a8a8a2;
+  --accent: #3d6b8f;
+  --accent-hover: #2d5272;
+  --accent-bg: #eff4f8;
+  --err: #8a2525;
+  --err-bg: #fceaea;
 
-.dark {
-  --background: oklch(0.13 0.028 261.692);
-  --foreground: oklch(0.985 0.002 247.858);
-  --card: oklch(0.17 0.025 261.692);
-  --card-foreground: oklch(0.985 0.002 247.858);
-  --popover: oklch(0.17 0.025 261.692);
-  --popover-foreground: oklch(0.985 0.002 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.21 0.034 264.665);
-  --secondary: oklch(0.269 0.025 264.364);
-  --secondary-foreground: oklch(0.985 0.002 247.858);
-  --muted: oklch(0.269 0.025 264.364);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.269 0.025 264.364);
-  --accent-foreground: oklch(0.985 0.002 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0.002 247.858);
-  --border: oklch(0.269 0.025 264.364);
-  --input: oklch(0.269 0.025 264.364);
-  --ring: oklch(0.551 0.018 264.364);
-  --sidebar: oklch(0.17 0.025 261.692);
-  --sidebar-foreground: oklch(0.985 0.002 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0.002 247.858);
-  --sidebar-accent: oklch(0.269 0.025 264.364);
-  --sidebar-accent-foreground: oklch(0.985 0.002 247.858);
-  --sidebar-border: oklch(0.269 0.025 264.364);
-  --sidebar-ring: oklch(0.551 0.018 264.364);
+  /* Status badge colors */
+  --status-ok-bg: #eef7f0;
+  --status-ok-text: #2a6b42;
+  --status-warn-bg: #fdf4e7;
+  --status-warn-text: #8a5a1a;
+  --status-err-bg: #fceaea;
+  --status-err-text: #8a2525;
+  --status-new-bg: #eef0fd;
+  --status-new-text: #3040a0;
+
+  /* Shadcn compat — map design tokens to Shadcn CSS vars */
+  --background: var(--bg);
+  --foreground: var(--text-1);
+  --card: var(--surface);
+  --card-foreground: var(--text-1);
+  --popover: var(--surface);
+  --popover-foreground: var(--text-1);
+  --primary: var(--accent);
+  --primary-foreground: #ffffff;
+  --secondary: var(--bg);
+  --secondary-foreground: var(--text-1);
+  --muted: var(--bg);
+  --muted-foreground: var(--text-2);
+  --accent-foreground: var(--accent);
+  --destructive: var(--err);
+  --destructive-foreground: #ffffff;
+  --input: var(--border);
+  --ring: var(--accent);
+  --radius: 0.3125rem;
 }
 
 @theme inline {
@@ -74,34 +59,33 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
+  /* --color-accent maps to soft bg so Shadcn hover states stay subtle */
+  --color-accent: var(--accent-bg);
+  --color-accent-foreground: var(--accent);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 3px);
+  --radius-xl: calc(var(--radius) + 6px);
 }
 
-* {
+*, *::before, *::after {
   border-color: var(--border);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--text-1);
+  font-weight: 300;
+  font-variant-numeric: slashed-zero;
 }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
