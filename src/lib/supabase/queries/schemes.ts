@@ -10,6 +10,12 @@ export const getSchemesByProject = (supabase: Client, projectId: string) =>
     .eq('project_id', projectId)
     .order('created_at', { ascending: true })
 
+export const getAllSchemesSummary = (supabase: Client) =>
+  supabase
+    .from('schemes')
+    .select('id, project_id, device_name, installation_location')
+    .order('created_at', { ascending: true })
+
 export const getScheme = (supabase: Client, schemeId: string) =>
   supabase.from('schemes').select('*').eq('id', schemeId).single()
 

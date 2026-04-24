@@ -23,7 +23,7 @@ export async function GET(
 
   const { data: project } = await getProject(supabase, scheme.project_id)
   if (!project) {
-    return new Response('Проект не найден', { status: 404 })
+    return new Response('Объект не найден', { status: 404 })
   }
 
   const buffer = await renderToBuffer(

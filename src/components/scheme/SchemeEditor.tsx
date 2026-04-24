@@ -6,10 +6,9 @@ import type { SchemeRow, SchemeLineRow } from '@/types/database'
 import { calcSchemeTotals, calcLineCurrents } from '@/lib/calculations/electrical'
 import type { PhasesCount } from '@/types/enums'
 import { saveSchemeHeaderAction, saveAllLinesAction } from '@/app/actions/scheme-lines'
+import { deleteSchemeAction } from '@/app/actions/schemes';
 import SchemeHeaderForm from './SchemeHeaderForm'
 import SchemeLinesTable from './SchemeLinesTable'
-
-type Tab = 'form' | 'lines'
 
 function newLine(schemeId: string, order: number): SchemeLineRow {
   return {
@@ -55,12 +54,12 @@ interface SchemeEditorProps {
 
 export default function SchemeEditor({ scheme, lines: initialLines, projectId, projectName }: SchemeEditorProps) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<Tab>('form')
   const [localScheme, setLocalScheme] = useState<SchemeRow>(scheme)
   const [localLines, setLocalLines] = useState<SchemeLineRow[]>(initialLines)
   const [dirty, setDirty] = useState(false)
   const [savedMsg, setSavedMsg] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   const phases = (localScheme.phases_count === 1 ? 1 : 3) as PhasesCount
@@ -199,25 +198,91 @@ export default function SchemeEditor({ scheme, lines: initialLines, projectId, p
     return () => window.removeEventListener('keydown', handler)
   }, [handleSave])
 
+  const handleDelete = useCallback(() => {
+    setShowDeleteConfirm(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    setShowDeleteConfirm(false);
+    startTransition(async () => {
+      await deleteSchemeAction(scheme.id, projectId);
+      router.push(`/projects/${projectId}`);
+      router.refresh();
+    });
+  }, [scheme.id, projectId, router])
+
   const schemeName = localScheme.device_name || 'Без названия'
-  const tabStyle = (tab: Tab): React.CSSProperties => ({
-    fontSize: 12.5,
-    color: activeTab === tab ? 'var(--accent)' : 'var(--text-2)',
-    padding: '10px 14px',
-    borderBottom: `2px solid ${activeTab === tab ? 'var(--accent)' : 'transparent'}`,
-    cursor: 'pointer',
-    fontWeight: activeTab === tab ? 500 : undefined,
-    transition: 'color .15s, border-color .15s',
-    background: 'none',
-    border: 'none',
-    borderBottomWidth: 2,
-    borderBottomStyle: 'solid',
-    borderBottomColor: activeTab === tab ? 'var(--accent)' : 'transparent',
-    fontFamily: 'inherit',
-    whiteSpace: 'nowrap',
-  })
 
   return (
+    <>
+      {showDeleteConfirm && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowDeleteConfirm(false); }}
+        >
+          <div
+            style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 8,
+              padding: 24,
+              width: 360,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
+            <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-1)' }}>
+              Удалить схему?
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>
+              «{schemeName}» будет удалена без возможности восстановления.
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                style={{
+                  padding: '6px 14px',
+                  fontSize: 12.5,
+                  border: '1px solid var(--border)',
+                  borderRadius: 5,
+                  background: 'none',
+                  color: 'var(--text-2)',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                disabled={isPending}
+                style={{
+                  padding: '6px 14px',
+                  fontSize: 12.5,
+                  border: 'none',
+                  borderRadius: 5,
+                  background: isPending ? 'var(--text-3)' : 'var(--err, #e53935)',
+                  color: '#fff',
+                  cursor: isPending ? 'not-allowed' : 'pointer',
+                  fontFamily: 'inherit',
+                  fontWeight: 500,
+                }}
+              >
+                {isPending ? 'Удаление…' : 'Удалить'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Form header */}
       <div
@@ -243,7 +308,7 @@ export default function SchemeEditor({ scheme, lines: initialLines, projectId, p
               textOverflow: 'ellipsis',
             }}
           >
-            {schemeName} — Принципиальная схема групповой сети
+              {schemeName}
           </div>
           <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>
             ГОСТ 21.613-2014 · {projectName}
@@ -339,6 +404,38 @@ export default function SchemeEditor({ scheme, lines: initialLines, projectId, p
           >
             {isPending ? 'Сохранение…' : 'Сохранить'}
           </button>
+            <button
+              onClick={handleDelete}
+              disabled={isPending}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                border: '1px solid var(--border)',
+                color: 'var(--text-2)',
+                borderRadius: 5,
+                padding: '5px 10px',
+                fontSize: 12,
+                background: 'none',
+                cursor: isPending ? 'not-allowed' : 'pointer',
+                fontFamily: 'inherit',
+                whiteSpace: 'nowrap',
+                transition: 'border-color .15s, color .15s',
+              }}
+              onMouseEnter={(e) => {
+                if (!isPending) {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.borderColor = 'var(--err, #e53935)';
+                  el.style.color = 'var(--err, #e53935)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.borderColor = 'var(--border)';
+                el.style.color = 'var(--text-2)';
+              }}
+            >
+              Удалить
+            </button>
         </div>
       </div>
 
@@ -348,49 +445,41 @@ export default function SchemeEditor({ scheme, lines: initialLines, projectId, p
           background: 'var(--surface)',
           borderBottom: '1px solid var(--border)',
           padding: '0 20px',
-          display: 'flex',
-          gap: 0,
+            display: 'flex',
           flexShrink: 0,
         }}
-      >
-        <button style={tabStyle('form')} onClick={() => setActiveTab('form')}>
-          Форма ГОСТ
-        </button>
-        <button style={tabStyle('lines')} onClick={() => setActiveTab('lines')}>
-          Линии ({localLines.length})
-        </button>
-        <button
-          style={{ ...tabStyle('form'), color: 'var(--text-3)', borderBottomColor: 'transparent' }}
-          disabled
         >
-          Анализ нагрузок
+        <button
+            style={{
+              fontSize: 12.5,
+              color: 'var(--accent)',
+              padding: '10px 14px',
+              cursor: 'default',
+              fontWeight: 500,
+              background: 'none',
+              border: 'none',
+              borderBottomWidth: 2,
+              borderBottomStyle: 'solid',
+              borderBottomColor: 'var(--accent)',
+              fontFamily: 'inherit',
+              whiteSpace: 'nowrap',
+            }}
+        >
+            Форма ГОСТ
         </button>
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        {activeTab === 'form' && (
-          <>
-            <SchemeHeaderForm scheme={localScheme} totals={totals} onChange={handleSchemeChange} />
-            <SchemeLinesTable
-              lines={localLines}
-              onLineChange={handleLineChange}
-              onAddLine={handleAddLine}
-              onDeleteLine={handleDeleteLine}
-            />
-          </>
-        )}
-        {activeTab === 'lines' && (
-          <div style={{ overflowX: 'auto', height: '100%' }}>
-            <SchemeLinesTable
-              lines={localLines}
-              onLineChange={handleLineChange}
-              onAddLine={handleAddLine}
-              onDeleteLine={handleDeleteLine}
-            />
-          </div>
-        )}
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          <SchemeHeaderForm scheme={localScheme} totals={totals} onChange={handleSchemeChange} />
+          <SchemeLinesTable
+            lines={localLines}
+            onLineChange={handleLineChange}
+            onAddLine={handleAddLine}
+            onDeleteLine={handleDeleteLine}
+          />
       </div>
     </div>
+    </>
   )
 }

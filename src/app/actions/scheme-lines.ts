@@ -38,8 +38,17 @@ export async function saveAllLinesAction(
     if (error) return { error: error.message }
   }
 
+  // Sanitize numeric fields that have DB check constraints
+  const sanitized = lines.map((line) => ({
+    ...line,
+    cos_phi:
+      line.cos_phi !== null && (line.cos_phi < 0.01 || line.cos_phi > 1.0)
+        ? null
+        : line.cos_phi,
+  }))
+
   // Upsert each line
-  for (const line of lines) {
+  for (const line of sanitized) {
     if (existingIds.has(line.id)) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { id, scheme_id, ...rest } = line

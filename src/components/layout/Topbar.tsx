@@ -1,4 +1,6 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { UserMenu } from '@/components/layout/UserMenu'
 
 export default async function Topbar() {
   const supabase = await createClient()
@@ -6,7 +8,12 @@ export default async function Topbar() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const initials = user?.email?.slice(0, 2).toUpperCase() ?? '??'
+  const email = user?.email ?? ''
+  const fullName =
+    (user?.user_metadata?.full_name as string | undefined) ??
+    (user?.user_metadata?.name as string | undefined) ??
+    null
+  const initials = email.slice(0, 2).toUpperCase() || '??'
 
   return (
     <header
@@ -24,7 +31,8 @@ export default async function Topbar() {
         gap: 0,
       }}
     >
-      <span
+      <Link
+        href="/dashboard"
         style={{
           fontWeight: 600,
           fontSize: 13,
@@ -34,36 +42,18 @@ export default async function Topbar() {
           borderRight: '1px solid var(--border)',
           marginRight: 12,
           whiteSpace: 'nowrap',
+          textDecoration: 'none',
         }}
       >
         SLDt
-      </span>
+      </Link>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1, overflow: 'hidden' }}>
-        <span style={{ color: 'var(--text-2)', fontSize: 13 }}>Проекты</span>
+        <span style={{ color: 'var(--text-2)', fontSize: 13 }}>Объекты</span>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <div
-          title={user?.email ?? ''}
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: '50%',
-            background: 'var(--accent-bg)',
-            color: 'var(--accent)',
-            fontSize: 11,
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '1px solid var(--border)',
-            cursor: 'pointer',
-            flexShrink: 0,
-          }}
-        >
-          {initials}
-        </div>
+        <UserMenu email={email} fullName={fullName} initials={initials} />
       </div>
     </header>
   )

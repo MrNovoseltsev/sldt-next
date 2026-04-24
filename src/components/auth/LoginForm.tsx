@@ -168,7 +168,7 @@ export default function LoginForm() {
           </button>
         </form>
 
-        <div style={s.divider}>
+        {/* <div style={s.divider}>
           <span style={s.dividerLine} />
           или
           <span style={s.dividerLine} />
@@ -178,15 +178,15 @@ export default function LoginForm() {
           style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 5, padding: '8px', fontSize: 12.5, fontFamily: 'inherit', fontWeight: 400, color: 'var(--text-2)', background: 'var(--surface)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
         >
           ⊟ Войти через SSO / LDAP
-        </button>
+        </button> */}
       </div>
 
-      <div style={s.footer}>
+      {/* <div style={s.footer}>
         Нет аккаунта?{' '}
         <span style={{ color: 'var(--accent)', cursor: 'pointer' }}>Запросить доступ</span>
         &nbsp;·&nbsp;
         <span style={{ color: 'var(--accent)', cursor: 'pointer' }}>Документация</span>
-      </div>
+      </div> */}
     </div>
   )
 }

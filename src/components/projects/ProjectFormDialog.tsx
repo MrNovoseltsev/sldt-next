@@ -75,7 +75,7 @@ export default function ProjectFormDialog({
       <DialogContent style={{ maxWidth: 420 }}>
         <DialogHeader>
           <DialogTitle style={{ fontSize: 14, fontWeight: 600 }}>
-            {mode === 'create' ? 'Новый проект' : 'Редактировать проект'}
+            {mode === 'create' ? 'Новый объект' : 'Редактировать объект'}
           </DialogTitle>
         </DialogHeader>
 
@@ -83,7 +83,7 @@ export default function ProjectFormDialog({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '4px 0 16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               <label style={{ fontSize: 11, color: 'var(--text-2)' }}>
-                Название проекта <span style={{ color: 'var(--err)' }}>*</span>
+                Название объекта <span style={{ color: 'var(--err)' }}>*</span>
               </label>
               <input
                 {...register('name')}

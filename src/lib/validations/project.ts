@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 export const projectSchema = z.object({
   id: z.string().uuid().optional(),
-  name: z.string().min(1, 'Название проекта обязательно').max(255),
+  name: z.string().min(1, 'Название объекта обязательно').max(255),
   customer: z.string().max(255).optional(),
 })
 

@@ -4,7 +4,7 @@ import type { SchemeTotals } from '@/lib/calculations/electrical'
 // Field styles matching Form Editor.html
 const fieldRow: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: '1fr auto',
+  gridTemplateColumns: '1fr 120px',
   alignItems: 'stretch',
   borderBottom: '1px solid var(--border-light)',
   minHeight: 32,
@@ -17,12 +17,12 @@ const fieldLabel: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
 }
-const inputCell = (wide?: boolean, calculated?: boolean): React.CSSProperties => ({
+const inputCell = (calculated?: boolean): React.CSSProperties => ({
   borderLeft: '1px solid var(--border-light)',
-  minWidth: wide ? 130 : 90,
   display: 'flex',
   alignItems: 'stretch',
   background: calculated ? 'var(--bg)' : undefined,
+  overflow: 'hidden',
 })
 const inputStyle = (calculated?: boolean): React.CSSProperties => ({
   border: 'none',
@@ -43,16 +43,15 @@ interface FieldProps {
   value: string
   onChange?: (v: string) => void
   options?: readonly string[]
-  wide?: boolean
   calculated?: boolean
   placeholder?: string
 }
 
-function Field({ label, value, onChange, options, wide, calculated, placeholder }: FieldProps) {
+function Field({ label, value, onChange, options, calculated, placeholder }: FieldProps) {
   return (
     <div style={fieldRow}>
       <div style={fieldLabel}>{label}</div>
-      <div style={inputCell(wide, calculated)}>
+      <div style={inputCell(calculated)}>
         {options ? (
           <select
             value={value}
@@ -130,22 +129,22 @@ export default function SchemeHeaderForm({ scheme, totals, onChange }: SchemeHea
       {/* LEFT — РУ */}
       <div style={{ borderRight: '1px solid var(--border)' }}>
         <div style={blockHeader}>Данные распределительного устройства</div>
-        <Field label="Распределительное устройство" value={scheme.device_name ?? ''} onChange={s('device_name')} wide />
-        <Field label="Марка оболочки" value={scheme.shell_brand ?? ''} onChange={s('shell_brand')} wide />
+        <Field label="Распределительное устройство" value={scheme.device_name ?? ''} onChange={s('device_name')} />
+        <Field label="Марка оболочки" value={scheme.shell_brand ?? ''} onChange={s('shell_brand')} />
         <Field label="Код оболочки" value={scheme.shell_code ?? ''} onChange={s('shell_code')} />
         <Field label="Способ монтажа" value={scheme.installation_method ?? INSTALLATION_METHODS[0]} onChange={s('installation_method')} options={INSTALLATION_METHODS} />
         <Field label="Степень защиты по ГОСТ 14.254-96" value={scheme.protection_degree ?? PROTECTION_DEGREES[0]} onChange={s('protection_degree')} options={PROTECTION_DEGREES} />
-        <Field label="Место установки" value={scheme.installation_location ?? ''} onChange={s('installation_location')} wide />
+        <Field label="Место установки" value={scheme.installation_location ?? ''} onChange={s('installation_location')} />
         <Field label="Количество фаз питания" value={String(scheme.phases_count ?? 3)} onChange={s('phases_count')} options={PHASES_OPTIONS} />
         <Field label="Тип питающей сети" value={scheme.network_type ?? NETWORK_TYPES[1]} onChange={s('network_type')} options={NETWORK_TYPES} />
-        <Field label="Электропитание от РУ" value={scheme.power_supply_from ?? ''} onChange={s('power_supply_from')} placeholder="Источник питания" wide />
+        <Field label="Электропитание от РУ" value={scheme.power_supply_from ?? ''} onChange={s('power_supply_from')} placeholder="Источник питания" />
         <Field label="Кол-во модулей 17,5 мм" value={scheme.modules_count != null ? String(scheme.modules_count) : ''} onChange={s('modules_count')} />
       </div>
 
       {/* CENTER — Аппарат ввода */}
       <div style={{ borderRight: '1px solid var(--border)' }}>
         <div style={blockHeader}>Аппарат до ввода в распределительное устройство</div>
-        <Field label="Тип аппарата" value={scheme.input_device_type ?? ''} onChange={s('input_device_type')} options={DEVICE_TYPES} wide />
+        <Field label="Тип аппарата" value={scheme.input_device_type ?? ''} onChange={s('input_device_type')} options={DEVICE_TYPES} />
         <Field label="Номинальный ток, А" value={scheme.nominal_current != null ? String(scheme.nominal_current) : ''} onChange={s('nominal_current')} />
         <Field label="Уставка расцепителя, А" value={scheme.trip_setting != null ? String(scheme.trip_setting) : ''} onChange={s('trip_setting')} />
         <Field label="Предельная коммутационная стойкость, кА" value={scheme.switching_capacity != null ? String(scheme.switching_capacity) : ''} onChange={s('switching_capacity')} />

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { SchemeLineRow } from '@/types/database'
 
 const CURVES = ['', 'A', 'B', 'C', 'D', 'K'] as const
@@ -61,14 +62,15 @@ function CellInput({
   placeholder?: string
   mono?: boolean
 }) {
+  const [focused, setFocused] = useState(false)
   return (
     <input
       value={value ?? ''}
-      placeholder={placeholder ?? ''}
+      placeholder={focused ? '' : (placeholder ?? '')}
       onChange={(e) => onChange(e.target.value)}
       style={cellInput(mono)}
-      onFocus={(e) => (e.currentTarget.style.background = 'var(--accent-bg)')}
-      onBlur={(e) => (e.currentTarget.style.background = 'transparent')}
+      onFocus={(e) => { setFocused(true); e.currentTarget.style.background = 'var(--accent-bg)' }}
+      onBlur={(e) => { setFocused(false); e.currentTarget.style.background = 'transparent' }}
     />
   )
 }
@@ -244,35 +246,7 @@ export default function SchemeLinesTable({
             </tr>
           </thead>
           <tbody>
-            {lines.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={21}
-                  style={{
-                    textAlign: 'center',
-                    padding: '28px',
-                    color: 'var(--text-3)',
-                    fontSize: 12,
-                    border: '1px solid var(--border-light)',
-                  }}
-                >
-                  Нет линий.{' '}
-                  <button
-                    onClick={onAddLine}
-                    style={{
-                      color: 'var(--accent)',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      fontSize: 12,
-                    }}
-                  >
-                    Добавить первую →
-                  </button>
-                </td>
-              </tr>
-            ) : (
+            {lines.length > 0 && (
               lines.map((line, idx) => (
                 <tr
                   key={line.id}
