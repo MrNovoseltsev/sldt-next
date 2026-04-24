@@ -6,6 +6,7 @@ import type { ProjectRow } from '@/types/database'
 import ProjectFormDialog from './ProjectFormDialog'
 import { deleteProjectAction } from '@/app/actions/projects'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { cn } from '@/lib/utils'
 
 type DialogState =
   | { type: 'none' }
@@ -104,23 +105,12 @@ export default function ProjectsView({ projects }: ProjectsViewProps) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Section header */}
-      <div
-        style={{
-          background: 'var(--surface)',
-          borderBottom: '1px solid var(--border)',
-          padding: '0 20px',
-          height: 52,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          flexShrink: 0,
-        }}
-      >
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-1)' }}>Объекты</div>
-          <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 1 }}>
+      <div className="bg-[var(--surface)] border-b border-border px-5 h-[52px] flex items-center gap-3 shrink-0">
+        <div className="flex-1">
+          <div className="text-[15px] font-semibold text-foreground">Объекты</div>
+          <div className="text-xs text-muted-foreground mt-px">
             {projects.length === 0
               ? 'Нет объектов'
               : `${projects.length} ${projects.length === 1 ? 'объект' : projects.length < 5 ? 'объекта' : 'объектов'}`}
@@ -128,24 +118,7 @@ export default function ProjectsView({ projects }: ProjectsViewProps) {
         </div>
         <button
           onClick={() => setDialog({ type: 'create' })}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            background: 'var(--accent)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 5,
-            padding: '6px 12px',
-            fontSize: 12.5,
-            fontWeight: 500,
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            transition: 'background .15s',
-            whiteSpace: 'nowrap',
-          }}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = 'var(--accent-hover)')}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = 'var(--accent)')}
+          className="flex items-center gap-1.5 bg-[var(--accent)] text-white border-none rounded-[5px] px-3 py-[6px] text-[12.5px] font-medium font-[inherit] cursor-pointer whitespace-nowrap transition-colors hover:bg-[var(--accent-hover)]"
         >
           <IconPlus />
           Создать объект
@@ -153,111 +126,42 @@ export default function ProjectsView({ projects }: ProjectsViewProps) {
       </div>
 
       {/* Toolbar */}
-      <div
-        style={{
-          background: 'var(--surface)',
-          borderBottom: '1px solid var(--border)',
-          padding: '0 20px',
-          height: 40,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          flexShrink: 0,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            border: '1px solid var(--border)',
-            borderRadius: 4,
-            padding: '4px 9px',
-            background: 'var(--bg)',
-            maxWidth: 240,
-            flex: 1,
-            transition: 'border-color .15s',
-          }}
-          onFocusCapture={(e) => (e.currentTarget.style.borderColor = 'var(--accent)')}
-          onBlurCapture={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
-        >
+      <div className="bg-[var(--surface)] border-b border-border px-5 h-[40px] flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 border border-border rounded-[4px] px-[9px] py-1 bg-[var(--bg)] max-w-[240px] flex-1 focus-within:border-[var(--accent)] transition-colors">
           <IconSearch />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Поиск по объектам…"
-            style={{
-              border: 'none',
-              background: 'none',
-              outline: 'none',
-              fontSize: 12,
-              color: 'var(--text-1)',
-              width: '100%',
-              fontFamily: 'inherit',
-            }}
+            className="border-none bg-transparent outline-none text-xs text-foreground w-full font-[inherit]"
           />
         </div>
       </div>
 
       {/* Table */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div className="flex-1 overflow-y-auto">
         {projects.length === 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              gap: 12,
-              color: 'var(--text-3)',
-            }}
-          >
-            <div style={{ fontSize: 13 }}>Нет объектов</div>
+          <div className="flex flex-col items-center justify-center h-full gap-3 text-[var(--text-3)]">
+            <div className="text-[13px]">Нет объектов</div>
             <button
               onClick={() => setDialog({ type: 'create' })}
-              style={{
-                fontSize: 12,
-                color: 'var(--accent)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                textDecoration: 'underline',
-              }}
+              className="text-xs text-[var(--accent)] bg-transparent border-none cursor-pointer font-[inherit] underline"
             >
               Создать первый объект
             </button>
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table className="w-full border-collapse">
             <thead>
-              <tr
-                style={{
-                  borderBottom: '1px solid var(--border)',
-                  background: 'var(--surface)',
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 10,
-                }}
-              >
+              <tr className="border-b border-border bg-[var(--surface)] sticky top-0 z-[10]">
                 {(['НАЗВАНИЕ', 'ЗАКАЗЧИК', 'ОБНОВЛЕНО'] as const).map((label, i) => (
                   <th
                     key={label}
-                    style={{
-                      padding: i === 0 ? '0 12px 0 28px' : '0 12px',
-                      height: 34,
-                      textAlign: 'left',
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: 'var(--text-2)',
-                      letterSpacing: '.05em',
-                      textTransform: 'uppercase',
-                      whiteSpace: 'nowrap',
-                      borderRight: i < 2 ? '1px solid var(--border-light)' : 'none',
-                      userSelect: 'none',
-                      width: i < 2 ? '50%' : undefined,
-                    }}
+                    className={cn(
+                      'h-[34px] text-left text-[11px] font-semibold text-muted-foreground tracking-[.05em] uppercase whitespace-nowrap select-none',
+                      i === 0 ? 'pl-7 pr-3' : 'px-3',
+                      i < 2 ? 'border-r border-[var(--border-light)] w-1/2' : '',
+                    )}
                   >
                     {label}
                   </th>
@@ -269,12 +173,7 @@ export default function ProjectsView({ projects }: ProjectsViewProps) {
                 <tr>
                   <td
                     colSpan={3}
-                    style={{
-                      textAlign: 'center',
-                      color: 'var(--text-3)',
-                      padding: '32px 0',
-                      fontSize: 13,
-                    }}
+                    className="text-center text-[var(--text-3)] py-8 text-[13px]"
                   >
                     Ничего не найдено
                   </td>
@@ -291,39 +190,18 @@ export default function ProjectsView({ projects }: ProjectsViewProps) {
                       onClick={() => router.push(`/projects/${project.id}`)}
                       onMouseEnter={() => setHoveredRow(project.id)}
                       onMouseLeave={() => setHoveredRow(null)}
-                      style={{
-                        borderBottom: '1px solid var(--border-light)',
-                        cursor: 'pointer',
-                        background: isHovered || isMenuOpen ? '#f4f3f0' : 'transparent',
-                        transition: 'background .1s',
-                        position: 'relative',
-                      }}
+                      className={cn(
+                        'border-b border-[var(--border-light)] cursor-pointer transition-colors duration-100',
+                        isHovered || isMenuOpen ? 'bg-[#f4f3f0]' : 'bg-transparent',
+                      )}
                     >
-                      <td
-                        style={{
-                          padding: '0 12px 0 28px',
-                          height: 38,
-                          fontSize: 12.5,
-                          fontWeight: 500,
-                          color: 'var(--text-1)',
-                          borderRight: '1px solid var(--border-light)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          position: 'relative',
-                        }}
-                      >
+                      <td className="pl-7 pr-3 h-[38px] text-[12.5px] font-medium text-foreground border-r border-[var(--border-light)] whitespace-nowrap overflow-hidden text-ellipsis relative">
                         <div
                           onClick={(e) => e.stopPropagation()}
-                          style={{
-                            position: 'absolute',
-                            left: 4,
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            opacity: showDots ? 1 : 0,
-                            pointerEvents: showDots ? 'auto' : 'none',
-                            transition: 'opacity .1s',
-                          }}
+                          className={cn(
+                            'absolute left-1 top-1/2 -translate-y-1/2 transition-opacity duration-100',
+                            showDots ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
+                          )}
                         >
                           <button
                             onClick={(e) => {
@@ -334,28 +212,10 @@ export default function ProjectsView({ projects }: ProjectsViewProps) {
                                 setMenuOpen({ id: project.id, top: rect.bottom + 4, left: rect.left })
                               }
                             }}
-                            style={{
-                              width: 20,
-                              height: 20,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              borderRadius: 3,
-                              border: 'none',
-                              background: isMenuOpen ? 'var(--border)' : 'none',
-                              color: 'var(--text-2)',
-                              cursor: 'pointer',
-                              padding: 0,
-                              transition: 'background .1s',
-                            }}
-                            onMouseEnter={(e) => {
-                              if (!isMenuOpen)
-                                (e.currentTarget as HTMLElement).style.background = 'var(--border-light)'
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!isMenuOpen)
-                                (e.currentTarget as HTMLElement).style.background = 'none'
-                            }}
+                            className={cn(
+                              'w-5 h-5 flex items-center justify-center rounded-[3px] border-none text-muted-foreground cursor-pointer p-0 transition-colors',
+                              isMenuOpen ? 'bg-border' : 'bg-transparent hover:bg-[var(--border-light)]',
+                            )}
                           >
                             <IconDotsVertical />
                           </button>
@@ -364,27 +224,14 @@ export default function ProjectsView({ projects }: ProjectsViewProps) {
                         {project.name}
                       </td>
                       <td
-                        style={{
-                          padding: '0 12px',
-                          height: 38,
-                          fontSize: 12.5,
-                          color: project.customer ? 'var(--text-1)' : 'var(--text-3)',
-                          borderRight: '1px solid var(--border-light)',
-                          whiteSpace: 'nowrap',
-                        }}
+                        className={cn(
+                          'px-3 h-[38px] text-[12.5px] border-r border-[var(--border-light)] whitespace-nowrap',
+                          project.customer ? 'text-foreground' : 'text-[var(--text-3)]',
+                        )}
                       >
                         {project.customer ?? '—'}
                       </td>
-                      <td
-                        style={{
-                          padding: '0 12px',
-                          height: 38,
-                          fontSize: 12,
-                          color: 'var(--text-2)',
-                          whiteSpace: 'nowrap',
-                          fontFamily: 'var(--font-mono)',
-                        }}
-                      >
+                      <td className="px-3 h-[38px] text-xs text-muted-foreground whitespace-nowrap font-mono">
                         {formatDate(project.updated_at)}
                       </td>
                     </tr>
@@ -396,48 +243,22 @@ export default function ProjectsView({ projects }: ProjectsViewProps) {
         )}
       </div>
 
-      {/* Context menu — fixed to viewport to escape table stacking context */}
+      {/* Context menu — fixed to viewport */}
       {menuOpen && (() => {
         const project = projects.find((p) => p.id === menuOpen.id)
         if (!project) return null
         return (
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{
-              position: 'fixed',
-              top: menuOpen.top,
-              left: menuOpen.left,
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 6,
-              boxShadow: '0 4px 12px rgba(0,0,0,.12)',
-              zIndex: 9999,
-              minWidth: 148,
-              padding: '3px 0',
-            }}
+            className="fixed bg-[var(--surface)] border border-border rounded-[6px] shadow-[0_4px_12px_rgba(0,0,0,.12)] z-[9999] min-w-[148px] py-[3px]"
+            style={{ top: menuOpen.top, left: menuOpen.left }}
           >
             <button
               onClick={() => {
                 setMenuOpen(null)
                 setDialog({ type: 'edit', project })
               }}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '7px 12px',
-                fontSize: 12.5,
-                color: 'var(--text-1)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                textAlign: 'left',
-                transition: 'background .1s',
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = 'var(--bg)')}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = 'none')}
+              className="w-full flex items-center gap-2 px-3 py-[7px] text-[12.5px] text-foreground bg-transparent border-none cursor-pointer font-[inherit] text-left transition-colors hover:bg-[var(--bg)]"
             >
               <IconEdit />
               Редактировать
@@ -447,23 +268,7 @@ export default function ProjectsView({ projects }: ProjectsViewProps) {
                 setMenuOpen(null)
                 setDialog({ type: 'delete', project })
               }}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '7px 12px',
-                fontSize: 12.5,
-                color: 'var(--err)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                textAlign: 'left',
-                transition: 'background .1s',
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = 'var(--err-bg)')}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = 'none')}
+              className="w-full flex items-center gap-2 px-3 py-[7px] text-[12.5px] text-destructive bg-transparent border-none cursor-pointer font-[inherit] text-left transition-colors hover:bg-[var(--err-bg)]"
             >
               <IconTrash />
               Удалить
@@ -485,63 +290,37 @@ export default function ProjectsView({ projects }: ProjectsViewProps) {
 
       {/* Delete confirmation dialog */}
       <Dialog open={dialog.type === 'delete'} onOpenChange={(open) => { if (!open) closeDialog() }}>
-        <DialogContent style={{ maxWidth: 380 }}>
+        <DialogContent className="max-w-[380px]">
           <DialogHeader>
-            <DialogTitle style={{ fontSize: 14, fontWeight: 600 }}>Удалить объект</DialogTitle>
+            <DialogTitle className="text-sm font-semibold">Удалить объект</DialogTitle>
           </DialogHeader>
-          <div style={{ fontSize: 13, color: 'var(--text-2)', padding: '4px 0 16px', lineHeight: 1.5 }}>
+          <div className="text-[13px] text-muted-foreground py-1 pb-4 leading-[1.5]">
             Удалить объект{' '}
-            <strong style={{ color: 'var(--text-1)' }}>
+            <strong className="text-foreground">
               «{dialog.type === 'delete' ? dialog.project.name : ''}»
             </strong>
             ? Это действие необратимо — все схемы внутри объекта будут удалены.
           </div>
           {deleteError && (
-            <div
-              style={{
-                fontSize: 12,
-                color: 'var(--err)',
-                background: 'var(--err-bg)',
-                padding: '7px 10px',
-                borderRadius: 5,
-                marginBottom: 12,
-              }}
-            >
+            <div className="text-xs text-destructive bg-[var(--err-bg)] px-[10px] py-[7px] rounded-[5px] mb-3">
               {deleteError}
             </div>
           )}
-          <DialogFooter style={{ gap: 8 }}>
+          <DialogFooter className="gap-2">
             <button
               onClick={closeDialog}
               disabled={isDeleting}
-              style={{
-                border: '1px solid var(--border)',
-                borderRadius: 5,
-                padding: '6px 14px',
-                fontSize: 12,
-                color: 'var(--text-2)',
-                background: 'none',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-              }}
+              className="border border-border rounded-[5px] px-[14px] py-[6px] text-xs text-muted-foreground bg-transparent cursor-pointer font-[inherit]"
             >
               Отмена
             </button>
             <button
               onClick={handleDelete}
               disabled={isDeleting}
-              style={{
-                background: isDeleting ? 'var(--text-3)' : 'var(--err)',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 5,
-                padding: '6px 16px',
-                fontSize: 12,
-                fontWeight: 500,
-                cursor: isDeleting ? 'not-allowed' : 'pointer',
-                fontFamily: 'inherit',
-                transition: 'background .15s',
-              }}
+              className={cn(
+                'border-none rounded-[5px] px-[16px] py-[6px] text-xs text-white font-medium font-[inherit] transition-colors',
+                isDeleting ? 'bg-[var(--text-3)] cursor-not-allowed' : 'bg-destructive cursor-pointer',
+              )}
             >
               {isDeleting ? 'Удаление…' : 'Удалить'}
             </button>

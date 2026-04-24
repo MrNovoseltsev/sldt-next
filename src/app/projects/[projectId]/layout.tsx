@@ -29,7 +29,7 @@ export default async function ProjectLayout({ children, params }: ProjectLayoutP
           projectName={project.name}
           schemes={schemes ?? []}
         />
-        <main className="flex-1 overflow-auto" style={{ background: 'var(--bg)' }}>
+        <main className="flex-1 overflow-auto bg-[var(--bg)]">
           {children}
         </main>
       </div>

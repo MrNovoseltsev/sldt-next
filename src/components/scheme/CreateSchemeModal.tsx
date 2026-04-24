@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { cn } from '@/lib/utils'
 
 interface CreateSchemeModalProps {
   onConfirm: (name: string) => void
@@ -23,32 +24,15 @@ export default function CreateSchemeModal({ onConfirm, onClose, isPending }: Cre
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,.45)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-      }}
+      className="fixed inset-0 bg-black/45 flex items-center justify-center z-[1000]"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
       onKeyDown={(e) => { if (e.key === 'Escape') onClose() }}
     >
       <form
         onSubmit={handleSubmit}
-        style={{
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderRadius: 8,
-          padding: 24,
-          width: 360,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
-        }}
+        className="bg-[var(--surface)] border border-border rounded-lg p-6 w-[360px] flex flex-col gap-4"
       >
-        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-1)' }}>
+        <div className="text-sm font-medium text-foreground">
           Название схемы
         </div>
         <input
@@ -57,52 +41,23 @@ export default function CreateSchemeModal({ onConfirm, onClose, isPending }: Cre
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Например: ЩС-1"
-          style={{
-            width: '100%',
-            padding: '7px 10px',
-            fontSize: 13,
-            border: '1px solid var(--border)',
-            borderRadius: 5,
-            background: 'var(--bg)',
-            color: 'var(--text-1)',
-            fontFamily: 'inherit',
-            outline: 'none',
-            boxSizing: 'border-box',
-          }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent)')}
-          onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+          className="w-full px-[10px] py-[7px] text-[13px] border border-border rounded-[5px] bg-[var(--bg)] text-foreground font-[inherit] outline-none transition-colors focus:border-[var(--accent)]"
         />
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+        <div className="flex gap-2 justify-end">
           <button
             type="button"
             onClick={onClose}
-            style={{
-              padding: '6px 14px',
-              fontSize: 12.5,
-              border: '1px solid var(--border)',
-              borderRadius: 5,
-              background: 'none',
-              color: 'var(--text-2)',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-            }}
+            className="px-[14px] py-[6px] text-[12.5px] border border-border rounded-[5px] bg-transparent text-muted-foreground cursor-pointer font-[inherit]"
           >
             Отмена
           </button>
           <button
             type="submit"
             disabled={isPending}
-            style={{
-              padding: '6px 14px',
-              fontSize: 12.5,
-              border: 'none',
-              borderRadius: 5,
-              background: isPending ? 'var(--text-3)' : 'var(--accent)',
-              color: '#fff',
-              cursor: isPending ? 'not-allowed' : 'pointer',
-              fontFamily: 'inherit',
-              fontWeight: 500,
-            }}
+            className={cn(
+              'px-[14px] py-[6px] text-[12.5px] border-none rounded-[5px] text-white font-medium font-[inherit]',
+              isPending ? 'bg-[var(--text-3)] cursor-not-allowed' : 'bg-[var(--accent)] cursor-pointer',
+            )}
           >
             {isPending ? 'Создание…' : 'Создать'}
           </button>

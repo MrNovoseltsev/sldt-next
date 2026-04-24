@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils'
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Укажите email').email('Некорректный email'),
@@ -13,52 +14,6 @@ const loginSchema = z.object({
 })
 
 type LoginValues = z.infer<typeof loginSchema>
-
-const s = {
-  wrap: {
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-  },
-  logo: {
-    fontSize: 18,
-    fontWeight: 600,
-    letterSpacing: '.06em',
-    color: 'var(--text-1)',
-    marginBottom: 6,
-  },
-  tagline: {
-    fontSize: 12,
-    color: 'var(--text-3)',
-    marginBottom: 36,
-    textAlign: 'center' as const,
-    lineHeight: 1.5,
-  },
-  card: {
-    background: 'var(--surface)',
-    border: '1px solid var(--border)',
-    borderRadius: 8,
-    padding: '28px 28px 24px',
-    width: '100%',
-    maxWidth: 360,
-  },
-  cardTitle: { fontSize: 15, fontWeight: 500, marginBottom: 4 },
-  cardSub: { fontSize: 12, color: 'var(--text-2)', marginBottom: 24 },
-  field: { display: 'flex', flexDirection: 'column' as const, gap: 5, marginBottom: 14 },
-  label: { fontSize: 12, color: 'var(--text-2)' },
-  fieldError: { fontSize: 11, color: 'var(--err)', marginTop: -2 },
-  divider: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-    margin: '18px 0',
-    color: 'var(--text-3)',
-    fontSize: 11,
-  },
-  dividerLine: { flex: 1, height: 1, background: 'var(--border)' },
-  footer: { marginTop: 20, fontSize: 11, color: 'var(--text-3)', textAlign: 'center' as const },
-} as const
 
 export default function LoginForm() {
   const router = useRouter()
@@ -86,75 +41,68 @@ export default function LoginForm() {
     router.refresh()
   }
 
-  const inputStyle = (hasError: boolean) => ({
-    border: `1px solid ${hasError ? 'var(--err)' : 'var(--border)'}`,
-    borderRadius: 5,
-    padding: '8px 11px',
-    fontSize: 13,
-    fontFamily: 'inherit',
-    fontWeight: 300,
-    color: 'var(--text-1)',
-    background: hasError ? 'var(--err-bg)' : 'var(--bg)',
-    outline: 'none',
-    width: '100%',
-  })
-
   return (
-    <div style={s.wrap}>
-      <div style={s.logo}>SLDt</div>
-      <div style={s.tagline}>
+    <div className="w-full flex flex-col items-center">
+      <div className="text-[18px] font-semibold tracking-[.06em] text-foreground mb-[6px]">SLDt</div>
+      <div className="text-xs text-[var(--text-3)] mb-9 text-center leading-[1.5]">
         Автоматизация электротехнической документации
         <br />
         по ГОСТ 21.613-2014
       </div>
 
-      <div style={s.card}>
-        <div style={s.cardTitle}>Вход в систему</div>
-        <div style={s.cardSub}>Введите рабочие данные учётной записи</div>
+      <div className="bg-[var(--surface)] border border-border rounded-lg p-[28px_28px_24px] w-full max-w-[360px]">
+        <div className="text-[15px] font-medium mb-1">Вход в систему</div>
+        <div className="text-xs text-muted-foreground mb-6">Введите рабочие данные учётной записи</div>
 
         {serverError && (
-          <div style={{ background: 'var(--err-bg)', border: '1px solid #e4b0b0', borderRadius: 5, padding: '10px 12px', fontSize: 12, color: 'var(--err)', marginBottom: 14 }}>
+          <div className="bg-[var(--err-bg)] border border-[#e4b0b0] rounded-[5px] px-3 py-[10px] text-xs text-destructive mb-[14px]">
             {serverError}
           </div>
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
-          <div style={s.field}>
-            <label style={s.label}>Email</label>
+          <div className="flex flex-col gap-[5px] mb-[14px]">
+            <label className="text-xs text-muted-foreground">Email</label>
             <input
               type="email"
               placeholder="ivanov@company.ru"
               autoComplete="email"
-              style={inputStyle(!!errors.email)}
+              className={cn(
+                'border rounded-[5px] px-[11px] py-[8px] text-[13px] font-light text-foreground outline-none w-full transition-colors focus:border-[var(--accent)]',
+                errors.email ? 'border-destructive bg-[var(--err-bg)] focus:border-destructive' : 'border-border bg-[var(--bg)]',
+              )}
               {...register('email')}
             />
-            {errors.email && <span style={s.fieldError}>{errors.email.message}</span>}
+            {errors.email && <span className="text-[11px] text-destructive -mt-[2px]">{errors.email.message}</span>}
           </div>
 
-          <div style={s.field}>
-            <label style={s.label}>Пароль</label>
-            <div style={{ position: 'relative' }}>
+          <div className="flex flex-col gap-[5px] mb-[14px]">
+            <label className="text-xs text-muted-foreground">Пароль</label>
+            <div className="relative">
               <input
                 type={showPw ? 'text' : 'password'}
                 placeholder="••••••••"
                 autoComplete="current-password"
-                style={{ ...inputStyle(!!errors.password), paddingRight: 36 }}
+                className={cn(
+                  'border rounded-[5px] px-[11px] py-[8px] pr-9 text-[13px] font-light text-foreground outline-none w-full transition-colors focus:border-[var(--accent)]',
+                  errors.password ? 'border-destructive bg-[var(--err-bg)] focus:border-destructive' : 'border-border bg-[var(--bg)]',
+                )}
                 {...register('password')}
               />
               <button
                 type="button"
                 onClick={() => setShowPw((p) => !p)}
-                style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, padding: 0 }}
+                className="absolute right-[10px] top-1/2 -translate-y-1/2 text-[var(--text-3)] bg-transparent border-none cursor-pointer text-[13px] p-0"
               >
                 {showPw ? '○' : '●'}
               </button>
             </div>
-            {errors.password && <span style={s.fieldError}>{errors.password.message}</span>}
+            {errors.password && <span className="text-[11px] text-destructive -mt-[2px]">{errors.password.message}</span>}
           </div>
 
           <button
             type="button"
-            style={{ fontSize: 11.5, color: 'var(--accent)', display: 'block', textAlign: 'right', width: '100%', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 20 }}
+            className="text-[11.5px] text-[var(--accent)] block text-right w-full bg-transparent border-none cursor-pointer mb-5"
           >
             Забыли пароль?
           </button>
@@ -162,31 +110,15 @@ export default function LoginForm() {
           <button
             type="submit"
             disabled={isSubmitting}
-            style={{ width: '100%', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 5, padding: '9px', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+            className={cn(
+              'w-full bg-[var(--accent)] text-white border-none rounded-[5px] py-[9px] text-[13px] font-medium font-[inherit] flex items-center justify-center gap-2 transition-opacity',
+              isSubmitting ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
+            )}
           >
             {isSubmitting ? 'Вход…' : 'Войти'}
           </button>
         </form>
-
-        {/* <div style={s.divider}>
-          <span style={s.dividerLine} />
-          или
-          <span style={s.dividerLine} />
-        </div>
-
-        <button
-          style={{ width: '100%', border: '1px solid var(--border)', borderRadius: 5, padding: '8px', fontSize: 12.5, fontFamily: 'inherit', fontWeight: 400, color: 'var(--text-2)', background: 'var(--surface)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-        >
-          ⊟ Войти через SSO / LDAP
-        </button> */}
       </div>
-
-      {/* <div style={s.footer}>
-        Нет аккаунта?{' '}
-        <span style={{ color: 'var(--accent)', cursor: 'pointer' }}>Запросить доступ</span>
-        &nbsp;·&nbsp;
-        <span style={{ color: 'var(--accent)', cursor: 'pointer' }}>Документация</span>
-      </div> */}
     </div>
   )
 }

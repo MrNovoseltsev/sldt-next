@@ -7,16 +7,9 @@ import type { ProjectRow } from '@/types/database'
 import type { SidebarProject, SidebarLocation, SidebarScheme } from '@/types/sidebar';
 import { deleteProjectAction, updateProjectAction } from '@/app/actions/projects';
 import ProjectFormDialog from '@/components/projects/ProjectFormDialog'
-
-// const MODES = [
-//   { id: 'all', label: 'Все объекты' },
-//   { id: 'active', label: 'Активные' },
-//   { id: 'service', label: 'Обслуживание' },
-//   { id: 'archive', label: 'Списание' },
-// ] as const
+import { cn } from '@/lib/utils'
 
 type Tab = 'nav' | 'fav'
-// type ModeId = (typeof MODES)[number]['id']
 
 interface SidebarProps {
   projectTree: SidebarProject[];
@@ -28,34 +21,14 @@ function ToggleBtn({ expanded, onToggle }: { expanded: boolean; onToggle: (e: Re
   return (
     <button
       onClick={onToggle}
-      style={{
-        width: 14, height: 14, flexShrink: 0,
-        border: '1px solid var(--border)', borderRadius: 2,
-        background: 'var(--surface)', color: 'var(--text-2)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 11, lineHeight: 1, cursor: 'pointer',
-        fontFamily: 'var(--font-mono, monospace)',
-        appearance: 'none' as React.CSSProperties['appearance'],
-        padding: 0, outline: 'none',
-        transition: 'background .12s, border-color .12s',
-      }}
-      onMouseEnter={(e) => {
-        const el = e.currentTarget as HTMLButtonElement;
-        el.style.borderColor = 'var(--text-2)';
-        el.style.background = 'var(--bg)';
-      }}
-      onMouseLeave={(e) => {
-        const el = e.currentTarget as HTMLButtonElement;
-        el.style.borderColor = 'var(--border)';
-        el.style.background = 'var(--surface)';
-      }}
+      className="w-[14px] h-[14px] shrink-0 border border-border rounded-[2px] bg-[var(--surface)] text-muted-foreground flex items-center justify-center text-[11px] leading-none cursor-pointer p-0 outline-none transition-colors hover:border-[var(--text-2)] hover:bg-[var(--bg)]"
     >
       {expanded ? '−' : '+'}
     </button>
   );
 }
 
-const toggleSpace = <span style={{ width: 14, flexShrink: 0, display: 'inline-block' }} />;
+const toggleSpace = <span className="w-[14px] shrink-0 inline-block" />;
 
 // ── Scheme node ───────────────────────────────────────────────────────────────
 
@@ -65,32 +38,20 @@ function SchemeNode({ scheme, projectId, pathname }: {
   const href = `/projects/${projectId}/schemes/${scheme.id}`;
   const isActive = pathname === href;
   return (
-    <div style={{ position: 'relative' }}>
+    <div className="relative">
       <Link
         href={href}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          height: 26, padding: '0 8px', margin: '1px 4px',
-          borderRadius: 3, textDecoration: 'none',
-          background: isActive ? 'var(--accent-bg)' : 'transparent',
-          transition: 'background .1s',
-          position: 'relative',
-        }}
-        onMouseEnter={(e) => {
-          if (!isActive) (e.currentTarget as HTMLElement).style.background = 'var(--bg)';
-        }}
-        onMouseLeave={(e) => {
-          if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent';
-        }}
+        className={cn(
+          'flex items-center gap-1.5 h-[26px] px-2 my-px mx-1 rounded-[3px] no-underline transition-colors duration-100',
+          isActive ? 'bg-accent' : 'bg-transparent hover:bg-[var(--bg)]',
+        )}
       >
-        <span style={{ position: 'absolute', left: -7, top: '50%', width: 7, height: 1, background: 'var(--border-light)', display: 'block', pointerEvents: 'none' }} />
+        <span className="absolute left-[-7px] top-1/2 w-[7px] h-px bg-[var(--border-light)] block pointer-events-none" />
         {toggleSpace}
-        <span style={{
-          fontSize: 12,
-          color: isActive ? 'var(--accent)' : 'var(--text-1)',
-          fontWeight: isActive ? 500 : 300,
-          flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>
+        <span className={cn(
+          'text-xs flex-1 overflow-hidden text-ellipsis whitespace-nowrap',
+          isActive ? 'text-[var(--accent)] font-medium' : 'text-foreground font-light',
+        )}>
           {scheme.device_name ?? 'Без названия'}
         </span>
       </Link>
@@ -111,37 +72,23 @@ function LocationNode({ location, projectId, locationKey, pathname, expanded, on
   return (
     <>
       <div
-        style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          height: 26, cursor: 'pointer', padding: '0 8px', margin: '1px 4px',
-          borderRadius: 3, position: 'relative',
-          background: isChildActive && !isExp ? 'var(--accent-bg)' : 'transparent',
-          transition: 'background .1s',
-        }}
+        className={cn(
+          'flex items-center gap-1.5 h-[26px] cursor-pointer px-2 my-px mx-1 rounded-[3px] relative transition-colors duration-100',
+          isChildActive && !isExp ? 'bg-accent' : 'bg-transparent hover:bg-[var(--bg)]',
+        )}
         onClick={() => onToggle(locationKey)}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.background =
-            isChildActive && !isExp ? 'var(--accent-bg)' : 'var(--bg)';
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.background =
-            isChildActive && !isExp ? 'var(--accent-bg)' : 'transparent';
-        }}
       >
-        <span style={{ position: 'absolute', left: -7, top: '50%', width: 7, height: 1, background: 'var(--border-light)', display: 'block', pointerEvents: 'none' }} />
+        <span className="absolute left-[-7px] top-1/2 w-[7px] h-px bg-[var(--border-light)] block pointer-events-none" />
         <ToggleBtn expanded={isExp} onToggle={(e) => { e.stopPropagation(); onToggle(locationKey); }} />
-        <span style={{
-          fontSize: 12, color: 'var(--text-1)', fontWeight: 300,
-          flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>
+        <span className="text-xs text-foreground font-light flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
           {location.name ?? 'Без расположения'}
         </span>
-        <span style={{ fontSize: 11, color: 'var(--text-3)', flexShrink: 0 }}>
+        <span className="text-[11px] text-[var(--text-3)] shrink-0">
           ({location.schemes.length})
         </span>
       </div>
       {isExp && (
-        <div style={{ marginLeft: 15, borderLeft: '1px solid var(--border-light)' }}>
+        <div className="ml-[15px] border-l border-[var(--border-light)]">
           {location.schemes.map((scheme) => (
             <SchemeNode key={scheme.id} scheme={scheme} projectId={projectId} pathname={pathname} />
           ))}
@@ -189,7 +136,6 @@ function ProjectNode({
   const isActive = pathname?.startsWith(`/projects/${project.id}`);
   const showActions = hoveredId === project.id || menuOpenId === project.id;
 
-  // Flat mode: single null-name location → show schemes directly without location level
   const isFlatMode = project.locations.length === 1 && project.locations[0].name === null;
 
   return (
@@ -198,7 +144,7 @@ function ProjectNode({
       onMouseLeave={() => setHoveredId(null)}
     >
       {renamingId === project.id ? (
-        <div style={{ margin: '1px 4px' }}>
+        <div className="my-px mx-1">
           <input
             autoFocus
             value={renameValue}
@@ -208,48 +154,35 @@ function ProjectNode({
               if (e.key === 'Escape') onCancelRename();
             }}
             onBlur={onCancelRename}
-            style={{
-              width: '100%', height: 26, padding: '0 8px', fontSize: 12,
-              border: '1px solid var(--accent)', borderRadius: 3,
-              background: 'var(--bg)', color: 'var(--text-1)',
-              fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
-            }}
+            className="w-full h-[26px] px-2 text-xs border border-[var(--accent)] rounded-[3px] bg-[var(--bg)] text-foreground font-[inherit] outline-none box-border"
           />
         </div>
       ) : (
         <div
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            height: 26, cursor: hasChildren ? 'pointer' : 'default',
-            padding: '0 8px', paddingRight: showActions ? 28 : 8,
-            margin: '1px 4px', borderRadius: 3, position: 'relative',
-            background: isActive && !isExp ? 'var(--accent-bg)' : 'transparent',
-            transition: 'background .1s',
-          }}
+          className={cn(
+            'flex items-center gap-1.5 h-[26px] px-2 my-px mx-1 rounded-[3px] relative transition-colors duration-100',
+            hasChildren ? 'cursor-pointer' : 'cursor-default',
+            isActive && !isExp
+              ? 'bg-accent'
+              : showActions
+              ? 'bg-[var(--bg)]'
+              : 'bg-transparent hover:bg-[var(--bg)]',
+            showActions ? 'pr-[28px]' : 'pr-2',
+          )}
           onClick={() => { if (hasChildren) onToggle(project.id); }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.background =
-              isActive && !isExp ? 'var(--accent-bg)' : 'var(--bg)';
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.background =
-              isActive && !isExp ? 'var(--accent-bg)' : 'transparent';
-          }}
         >
           {hasChildren
             ? <ToggleBtn expanded={isExp} onToggle={(e) => { e.stopPropagation(); onToggle(project.id); }} />
             : toggleSpace
           }
-          <span style={{
-            fontSize: 12,
-            color: isActive ? 'var(--accent)' : 'var(--text-1)',
-            fontWeight: isActive ? 500 : 300,
-            flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>
+          <span className={cn(
+            'text-xs flex-1 overflow-hidden text-ellipsis whitespace-nowrap',
+            isActive ? 'text-[var(--accent)] font-medium' : 'text-foreground font-light',
+          )}>
             {project.name}
           </span>
           {schemeCount > 0 && (
-            <span style={{ fontSize: 11, color: 'var(--text-3)', flexShrink: 0 }}>
+            <span className="text-[11px] text-[var(--text-3)] shrink-0">
               ({schemeCount})
             </span>
           )}
@@ -260,23 +193,10 @@ function ProjectNode({
                 e.preventDefault(); e.stopPropagation();
                 setMenuOpenId(menuOpenId === project.id ? null : project.id);
               }}
-              style={{
-                position: 'absolute', right: 4, top: '50%',
-                transform: 'translateY(-50%)',
-                width: 20, height: 20,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: menuOpenId === project.id ? 'var(--border)' : 'transparent',
-                border: 'none', borderRadius: 3, cursor: 'pointer',
-                color: 'var(--text-2)', padding: 0, transition: 'background .1s',
-              }}
-              onMouseEnter={(e) => {
-                if (menuOpenId !== project.id)
-                  (e.currentTarget as HTMLElement).style.background = 'var(--border-light)';
-              }}
-              onMouseLeave={(e) => {
-                if (menuOpenId !== project.id)
-                  (e.currentTarget as HTMLElement).style.background = 'transparent';
-              }}
+              className={cn(
+                'absolute right-1 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center border-none rounded-[3px] cursor-pointer text-muted-foreground p-0 transition-colors duration-100',
+                menuOpenId === project.id ? 'bg-border' : 'bg-transparent hover:bg-[var(--border-light)]',
+              )}
             >
               <svg width="3" height="13" viewBox="0 0 3 13" fill="currentColor">
                 <circle cx="1.5" cy="1.5" r="1.5" />
@@ -289,12 +209,7 @@ function ProjectNode({
           {menuOpenId === project.id && (
             <div
               ref={menuRef}
-              style={{
-                position: 'absolute', right: 0, top: '100%', zIndex: 200,
-                background: 'var(--surface)', border: '1px solid var(--border)',
-                borderRadius: 5, boxShadow: '0 4px 12px rgba(0,0,0,.1)',
-                minWidth: 150, overflow: 'hidden', padding: '2px 0',
-              }}
+              className="absolute right-0 top-full z-[200] bg-[var(--surface)] border border-border rounded-[5px] shadow-[0_4px_12px_rgba(0,0,0,.1)] min-w-[150px] overflow-hidden py-0.5"
             >
               {([
                 { label: isFavorited ? 'Убрать из избранного' : 'Добавить в избранное', action: onToggleFavorite },
@@ -305,14 +220,10 @@ function ProjectNode({
                 <button
                   key={item.label}
                   onClick={item.action}
-                  style={{
-                    width: '100%', textAlign: 'left', padding: '6px 12px', fontSize: 12,
-                    color: 'danger' in item && item.danger ? 'var(--err)' : 'var(--text-1)',
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    fontFamily: 'inherit', display: 'block',
-                  }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--bg)'; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'none'; }}
+                  className={cn(
+                    'w-full text-left px-3 py-[6px] text-xs bg-transparent border-none cursor-pointer font-[inherit] block transition-colors hover:bg-[var(--bg)]',
+                    item.danger ? 'text-destructive' : 'text-foreground',
+                  )}
                 >
                   {item.label}
                 </button>
@@ -323,7 +234,7 @@ function ProjectNode({
       )}
 
       {isExp && hasChildren && (
-        <div style={{ marginLeft: 15, borderLeft: '1px solid var(--border-light)' }}>
+        <div className="ml-[15px] border-l border-[var(--border-light)]">
           {isFlatMode
             ? project.locations[0].schemes.map((scheme) => (
               <SchemeNode key={scheme.id} scheme={scheme} projectId={project.id} pathname={pathname} />
@@ -354,7 +265,6 @@ function ProjectNode({
 export default function Sidebar({ projectTree }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [tab, setTab] = useState<Tab>('nav')
-  // const [mode, setMode] = useState<ModeId>('all')
   const pathname = usePathname()
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -462,40 +372,25 @@ export default function Sidebar({ projectTree }: SidebarProps) {
 
       {deleteTargetId && (
         <div
-          style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-          }}
+          className="fixed inset-0 bg-black/45 flex items-center justify-center z-[1000]"
           onClick={(e) => { if (e.target === e.currentTarget) setDeleteTargetId(null); }}
           onKeyDown={(e) => { if (e.key === 'Escape') setDeleteTargetId(null); }}
         >
-          <div style={{
-            background: 'var(--surface)', border: '1px solid var(--border)',
-            borderRadius: 8, padding: 24, width: 320,
-            display: 'flex', flexDirection: 'column', gap: 16,
-          }}>
-            <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-1)' }}>Удалить объект?</div>
-            <div style={{ fontSize: 13, color: 'var(--text-2)' }}>
+          <div className="bg-[var(--surface)] border border-border rounded-lg p-6 w-[320px] flex flex-col gap-4">
+            <div className="text-sm font-medium text-foreground">Удалить объект?</div>
+            <div className="text-[13px] text-muted-foreground">
               Все схемы объекта будут удалены. Это действие нельзя отменить.
             </div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setDeleteTargetId(null)}
-                style={{
-                  padding: '6px 14px', fontSize: 12.5,
-                  border: '1px solid var(--border)', borderRadius: 5,
-                  background: 'none', color: 'var(--text-2)', cursor: 'pointer', fontFamily: 'inherit',
-                }}
+                className="px-[14px] py-[6px] text-[12.5px] border border-border rounded-[5px] bg-transparent text-muted-foreground cursor-pointer font-[inherit]"
               >
                 Отмена
               </button>
               <button
                 onClick={() => handleDelete(deleteTargetId)}
-                style={{
-                  padding: '6px 14px', fontSize: 12.5, border: 'none', borderRadius: 5,
-                  background: 'var(--err)', color: '#fff', cursor: 'pointer',
-                  fontFamily: 'inherit', fontWeight: 500,
-                }}
+                className="px-[14px] py-[6px] text-[12.5px] border-none rounded-[5px] bg-destructive text-white cursor-pointer font-[inherit] font-medium"
               >
                 Удалить
               </button>
@@ -504,34 +399,28 @@ export default function Sidebar({ projectTree }: SidebarProps) {
         </div>
       )}
 
-      <nav style={{
-        width: collapsed ? 32 : 240, minWidth: collapsed ? 32 : 240,
-        background: 'var(--surface)', borderRight: '1px solid var(--border)',
-        display: 'flex', flexDirection: 'column',
-        overflow: 'hidden', position: 'relative', flexShrink: 0,
-        transition: 'width .22s cubic-bezier(.4,0,.2,1), min-width .22s cubic-bezier(.4,0,.2,1)',
-      }}>
+      <nav
+        className="bg-[var(--surface)] border-r border-border flex flex-col overflow-hidden relative shrink-0"
+        style={{
+          width: collapsed ? 32 : 240,
+          minWidth: collapsed ? 32 : 240,
+          transition: 'width .22s cubic-bezier(.4,0,.2,1), min-width .22s cubic-bezier(.4,0,.2,1)',
+        }}
+      >
         {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center',
-          borderBottom: '1px solid var(--border)',
-          flexShrink: 0, overflow: 'hidden',
-        }}>
+        <div className="flex items-center border-b border-border shrink-0 overflow-hidden">
           {!collapsed && (
-            <div style={{ display: 'flex', flex: 1, padding: '0 8px' }}>
+            <div className="flex flex-1 px-2">
               {(['nav', 'fav'] as Tab[]).map((t) => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
-                  style={{
-                    fontSize: 12, fontWeight: 500,
-                    color: tab === t ? 'var(--accent)' : 'var(--text-2)',
-                    padding: '10px 8px', cursor: 'pointer',
-                    background: 'none', border: 'none',
-                    borderBottomWidth: 2, borderBottomStyle: 'solid',
-                    borderBottomColor: tab === t ? 'var(--accent)' : 'transparent',
-                    transition: 'color .15s, border-color .15s', whiteSpace: 'nowrap',
-                  }}
+                  className={cn(
+                    'text-xs font-medium px-2 py-[10px] cursor-pointer bg-transparent border-none border-b-2 whitespace-nowrap transition-colors duration-150',
+                    tab === t
+                      ? 'text-[var(--accent)] border-b-[var(--accent)]'
+                      : 'text-muted-foreground border-b-transparent',
+                  )}
                 >
                   {t === 'nav' ? 'Навигация' : 'Избранное'}
                 </button>
@@ -541,20 +430,19 @@ export default function Sidebar({ projectTree }: SidebarProps) {
           <button
             onClick={() => setCollapsed((c) => !c)}
             title={collapsed ? 'Развернуть панель' : 'Свернуть панель'}
-            style={{
-              width: 32, minWidth: 32, height: 38,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', color: 'var(--text-3)', background: 'none', border: 'none',
-              ...(collapsed ? { position: 'absolute', top: 3, left: 0 } : {}),
-            }}
+            className={cn(
+              'w-8 min-w-[32px] h-[38px] flex items-center justify-center cursor-pointer text-[var(--text-3)] bg-transparent border-none',
+              collapsed && 'absolute top-[3px] left-0',
+            )}
           >
-            <span style={{
-              width: 20, height: 20, borderRadius: 5,
-              border: '1px solid var(--border)', background: 'var(--bg)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <svg width="8" height="12" viewBox="0 0 8 12" fill="none"
-                style={{ transform: collapsed ? 'none' : 'rotate(180deg)', transition: 'transform .22s' }}>
+            <span className="w-5 h-5 rounded-[5px] border border-border bg-[var(--bg)] flex items-center justify-center">
+              <svg
+                width="8"
+                height="12"
+                viewBox="0 0 8 12"
+                fill="none"
+                style={{ transform: collapsed ? 'none' : 'rotate(180deg)', transition: 'transform .22s' }}
+              >
                 <path d="M2 1l5 5-5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </span>
@@ -565,85 +453,52 @@ export default function Sidebar({ projectTree }: SidebarProps) {
           <>
             {tab === 'nav' && (
               <>
-                {/* Mode filters */}
-                {/* <div style={{
-                  padding: 8, display: 'flex', flexDirection: 'column', gap: 1,
-                  borderBottom: '1px solid var(--border-light)', flexShrink: 0,
-                }}>
-                  {MODES.map((m) => (
-                    <button
-                      key={m.id}
-                      onClick={() => setMode(m.id)}
-                      style={{
-                        fontSize: 12,
-                        color: mode === m.id ? 'var(--accent)' : 'var(--text-2)',
-                        background: mode === m.id ? 'var(--accent-bg)' : 'none',
-                        fontWeight: mode === m.id ? 500 : 300,
-                        padding: '5px 8px', borderRadius: 4, textAlign: 'left',
-                        border: 'none', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', gap: 8,
-                        transition: 'background .15s, color .15s',
-                      }}
-                    >
-                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor', flexShrink: 0 }} />
-                      {m.label}
-                    </button>
-                  ))}
-                </div> */}
-
-                {/* Project tree */}
-                <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
-                  <div style={{
-                    fontSize: 10, fontWeight: 600, letterSpacing: '.08em',
-                    color: 'var(--text-3)', textTransform: 'uppercase', padding: '12px 12px 4px',
-                  }}>
+                <div className="flex-1 overflow-y-auto py-2">
+                  <div className="text-[10px] font-semibold tracking-[.08em] text-[var(--text-3)] uppercase px-3 pt-3 pb-1">
                     Объекты
                   </div>
 
                   {projectTree.length === 0 ? (
-                    <div style={{ padding: '24px 12px', textAlign: 'center', fontSize: 12, color: 'var(--text-3)' }}>
+                    <div className="px-3 py-6 text-center text-xs text-[var(--text-3)]">
                       Нет объектов
                     </div>
                   ) : (
-                      projectTree.map((project) => (
-                        <ProjectNode
-                          key={project.id}
-                          project={project}
-                          pathname={pathname ?? ''}
-                          expanded={expanded}
-                          onToggle={toggleExpanded}
-                          hoveredId={hoveredId}
-                          setHoveredId={setHoveredId}
-                          menuOpenId={menuOpenId}
-                          setMenuOpenId={setMenuOpenId}
-                          renamingId={renamingId}
-                          renameValue={renameValue}
-                          setRenameValue={setRenameValue}
-                          onStartRename={startRename}
-                          onConfirmRename={confirmRename}
-                          onCancelRename={() => setRenamingId(null)}
-                          onEdit={(p) => { setEditTarget(p); setMenuOpenId(null); }}
-                          onDelete={(id) => { setDeleteTargetId(id); setMenuOpenId(null); }}
-                          menuRef={menuRef}
-                          isFavorited={favorites.has(project.id)}
-                          onToggleFavorite={() => toggleFavorite(project.id)}
-                        />
-                      ))
+                    projectTree.map((project) => (
+                      <ProjectNode
+                        key={project.id}
+                        project={project}
+                        pathname={pathname ?? ''}
+                        expanded={expanded}
+                        onToggle={toggleExpanded}
+                        hoveredId={hoveredId}
+                        setHoveredId={setHoveredId}
+                        menuOpenId={menuOpenId}
+                        setMenuOpenId={setMenuOpenId}
+                        renamingId={renamingId}
+                        renameValue={renameValue}
+                        setRenameValue={setRenameValue}
+                        onStartRename={startRename}
+                        onConfirmRename={confirmRename}
+                        onCancelRename={() => setRenamingId(null)}
+                        onEdit={(p) => { setEditTarget(p); setMenuOpenId(null); }}
+                        onDelete={(id) => { setDeleteTargetId(id); setMenuOpenId(null); }}
+                        menuRef={menuRef}
+                        isFavorited={favorites.has(project.id)}
+                        onToggleFavorite={() => toggleFavorite(project.id)}
+                      />
+                    ))
                   )}
                 </div>
               </>
             )}
 
             {tab === 'fav' && (
-              <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
-                <div style={{
-                  fontSize: 10, fontWeight: 600, letterSpacing: '.08em',
-                  color: 'var(--text-3)', textTransform: 'uppercase', padding: '12px 12px 4px',
-                }}>
+              <div className="flex-1 overflow-y-auto py-2">
+                <div className="text-[10px] font-semibold tracking-[.08em] text-[var(--text-3)] uppercase px-3 pt-3 pb-1">
                   Избранное
                 </div>
                 {projectTree.filter((p) => favorites.has(p.id)).length === 0 ? (
-                  <div style={{ padding: '24px 12px', textAlign: 'center', fontSize: 12, color: 'var(--text-3)' }}>
+                  <div className="px-3 py-6 text-center text-xs text-[var(--text-3)]">
                     Нет избранного
                   </div>
                 ) : (

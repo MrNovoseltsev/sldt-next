@@ -1,42 +1,6 @@
 import type { SchemeRow } from '@/types/database'
 import type { SchemeTotals } from '@/lib/calculations/electrical'
-
-// Field styles matching Form Editor.html
-const fieldRow: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: '1fr 120px',
-  alignItems: 'stretch',
-  borderBottom: '1px solid var(--border-light)',
-  minHeight: 32,
-}
-const fieldLabel: React.CSSProperties = {
-  fontSize: 11.5,
-  color: 'var(--text-2)',
-  padding: '7px 10px 7px 14px',
-  lineHeight: 1.35,
-  display: 'flex',
-  alignItems: 'center',
-}
-const inputCell = (calculated?: boolean): React.CSSProperties => ({
-  borderLeft: '1px solid var(--border-light)',
-  display: 'flex',
-  alignItems: 'stretch',
-  background: calculated ? 'var(--bg)' : undefined,
-  overflow: 'hidden',
-})
-const inputStyle = (calculated?: boolean): React.CSSProperties => ({
-  border: 'none',
-  outline: 'none',
-  background: 'transparent',
-  width: '100%',
-  padding: '0 10px',
-  fontSize: 12,
-  color: calculated ? 'var(--accent)' : 'var(--text-1)',
-  fontWeight: calculated ? 500 : undefined,
-  fontFamily: 'inherit',
-  fontVariantNumeric: 'slashed-zero',
-  cursor: calculated ? 'default' : undefined,
-})
+import { cn } from '@/lib/utils'
 
 interface FieldProps {
   label: string
@@ -49,16 +13,16 @@ interface FieldProps {
 
 function Field({ label, value, onChange, options, calculated, placeholder }: FieldProps) {
   return (
-    <div style={fieldRow}>
-      <div style={fieldLabel}>{label}</div>
-      <div style={inputCell(calculated)}>
+    <div className="grid grid-cols-[1fr_120px] items-stretch border-b border-[var(--border-light)] min-h-[32px]">
+      <div className="text-[11.5px] text-muted-foreground py-[7px] pr-[10px] pl-[14px] leading-[1.35] flex items-center">
+        {label}
+      </div>
+      <div className={cn('border-l border-[var(--border-light)] flex items-stretch overflow-hidden', calculated && 'bg-[var(--bg)]')}>
         {options ? (
           <select
             value={value}
             onChange={(e) => onChange?.(e.target.value)}
-            style={{ ...inputStyle(), cursor: 'pointer' }}
-            onFocus={(e) => !calculated && (e.currentTarget.style.background = 'var(--accent-bg)')}
-            onBlur={(e) => (e.currentTarget.style.background = 'transparent')}
+            className="border-none outline-none bg-transparent w-full px-[10px] text-xs font-[inherit] cursor-pointer focus:bg-accent"
           >
             {options.map((o) => (
               <option key={o} value={o}>
@@ -73,26 +37,17 @@ function Field({ label, value, onChange, options, calculated, placeholder }: Fie
             readOnly={calculated}
             placeholder={placeholder ?? '—'}
             onChange={(e) => onChange?.(e.target.value)}
-            style={inputStyle(calculated)}
-            onFocus={(e) => !calculated && (e.currentTarget.style.background = 'var(--accent-bg)')}
-            onBlur={(e) => (e.currentTarget.style.background = 'transparent')}
+            className={cn(
+              'border-none outline-none bg-transparent w-full px-[10px] text-xs font-[inherit] slashed-zero transition-colors',
+              calculated
+                ? 'text-[var(--accent)] font-medium cursor-default'
+                : 'text-foreground focus:bg-accent',
+            )}
           />
         )}
       </div>
     </div>
   )
-}
-
-const blockHeader: React.CSSProperties = {
-  padding: '10px 14px 9px',
-  borderBottom: '1px solid var(--border)',
-  fontSize: 10,
-  fontWeight: 600,
-  letterSpacing: '.06em',
-  textTransform: 'uppercase',
-  color: 'var(--text-2)',
-  lineHeight: 1.4,
-  background: 'var(--bg)',
 }
 
 const INSTALLATION_METHODS = ['Напольный', 'Настенный', 'Встраиваемый', 'Стоечный'] as const
@@ -117,18 +72,13 @@ interface SchemeHeaderFormProps {
 export default function SchemeHeaderForm({ scheme, totals, onChange }: SchemeHeaderFormProps) {
   const s = (field: keyof SchemeRow) => (v: string) => onChange(field, v)
 
+  const blockHeader = 'px-[14px] pt-[10px] pb-[9px] border-b border-border text-[10px] font-semibold tracking-[.06em] uppercase text-muted-foreground leading-[1.4] bg-[var(--bg)]'
+
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr 1fr',
-        borderBottom: '1px solid var(--border)',
-        background: 'var(--surface)',
-      }}
-    >
+    <div className="grid grid-cols-3 border-b border-border bg-[var(--surface)]">
       {/* LEFT — РУ */}
-      <div style={{ borderRight: '1px solid var(--border)' }}>
-        <div style={blockHeader}>Данные распределительного устройства</div>
+      <div className="border-r border-border">
+        <div className={blockHeader}>Данные распределительного устройства</div>
         <Field label="Распределительное устройство" value={scheme.device_name ?? ''} onChange={s('device_name')} />
         <Field label="Марка оболочки" value={scheme.shell_brand ?? ''} onChange={s('shell_brand')} />
         <Field label="Код оболочки" value={scheme.shell_code ?? ''} onChange={s('shell_code')} />
@@ -142,8 +92,8 @@ export default function SchemeHeaderForm({ scheme, totals, onChange }: SchemeHea
       </div>
 
       {/* CENTER — Аппарат ввода */}
-      <div style={{ borderRight: '1px solid var(--border)' }}>
-        <div style={blockHeader}>Аппарат до ввода в распределительное устройство</div>
+      <div className="border-r border-border">
+        <div className={blockHeader}>Аппарат до ввода в распределительное устройство</div>
         <Field label="Тип аппарата" value={scheme.input_device_type ?? ''} onChange={s('input_device_type')} options={DEVICE_TYPES} />
         <Field label="Номинальный ток, А" value={scheme.nominal_current != null ? String(scheme.nominal_current) : ''} onChange={s('nominal_current')} />
         <Field label="Уставка расцепителя, А" value={scheme.trip_setting != null ? String(scheme.trip_setting) : ''} onChange={s('trip_setting')} />
@@ -152,17 +102,8 @@ export default function SchemeHeaderForm({ scheme, totals, onChange }: SchemeHea
         <Field label="Количество отключаемых полюсов" value={scheme.poles_count != null ? String(scheme.poles_count) : '3'} onChange={s('poles_count')} options={POLES} />
         <Field label="Уставка дифференциального тока, мА" value={scheme.differential_current != null ? String(scheme.differential_current) : ''} onChange={s('differential_current')} placeholder="—" />
         <Field label="Обозначение" value={scheme.designation ?? ''} onChange={s('designation')} />
-        <div style={{ ...fieldRow, minHeight: 40 }}>
-          <div
-            style={{
-              gridColumn: '1 / -1',
-              padding: '8px 14px',
-              fontSize: 11,
-              color: 'var(--text-3)',
-              fontStyle: 'italic',
-              lineHeight: 1.5,
-            }}
-          >
+        <div className="grid grid-cols-[1fr_120px] items-stretch border-b border-[var(--border-light)] min-h-[40px]">
+          <div className="col-span-full px-[14px] py-[8px] text-[11px] text-[var(--text-3)] italic leading-[1.5]">
             Информация о кабеле, которым запитано данное РУ, приведена в схеме РУ, осуществляющего
             электропитание
           </div>
@@ -171,10 +112,10 @@ export default function SchemeHeaderForm({ scheme, totals, onChange }: SchemeHea
 
       {/* RIGHT — Расчётные нагрузки */}
       <div>
-        <div style={blockHeader}>Данные об итоговых значениях нагрузок</div>
+        <div className={blockHeader}>Данные об итоговых значениях нагрузок</div>
         <Field label="Установленная полная мощность РУ, кВА" value={fmt(totals.installedPowerKva)} calculated />
         <Field label="Ток от установленной мощности, А" value={fmt(totals.installedCurrent)} calculated />
-        <div style={{ height: 1, background: 'var(--border-light)' }} />
+        <div className="h-px bg-[var(--border-light)]" />
         <Field label="Расчётная полная мощность РУ, кВА" value={fmt(totals.calculatedPowerKva)} calculated />
         <Field label="Расчётный ток (экв. группа), А" value={fmt(totals.calculatedCurrent)} calculated />
         <Field
@@ -183,7 +124,7 @@ export default function SchemeHeaderForm({ scheme, totals, onChange }: SchemeHea
           onChange={s('demand_coefficient')}
           placeholder="0.00–1.00"
         />
-        <div style={{ height: 1, background: 'var(--border-light)' }} />
+        <div className="h-px bg-[var(--border-light)]" />
         <Field label="Iуст в фазе А, А" value={fmt(totals.phaseA)} calculated />
         <Field label="Iуст в фазе В, А" value={fmt(totals.phaseB)} calculated />
         <Field label="Iуст в фазе С, А" value={fmt(totals.phaseC)} calculated />

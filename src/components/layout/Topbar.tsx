@@ -16,43 +16,19 @@ export default async function Topbar() {
   const initials = email.slice(0, 2).toUpperCase() || '??'
 
   return (
-    <header
-      style={{
-        height: 48,
-        minHeight: 48,
-        background: 'var(--surface)',
-        borderBottom: '1px solid var(--border)',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 12px',
-        position: 'relative',
-        zIndex: 100,
-        flexShrink: 0,
-        gap: 0,
-      }}
-    >
+    <header className="h-12 min-h-[48px] bg-[var(--surface)] border-b border-border flex items-center px-3 relative z-[100] shrink-0">
       <Link
         href="/dashboard"
-        style={{
-          fontWeight: 600,
-          fontSize: 13,
-          letterSpacing: '.04em',
-          color: 'var(--text-1)',
-          paddingRight: 10,
-          borderRight: '1px solid var(--border)',
-          marginRight: 12,
-          whiteSpace: 'nowrap',
-          textDecoration: 'none',
-        }}
+        className="font-semibold text-[13px] tracking-[.04em] text-foreground pr-[10px] border-r border-border mr-3 whitespace-nowrap no-underline"
       >
         SLDt
       </Link>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1, overflow: 'hidden' }}>
-        <span style={{ color: 'var(--text-2)', fontSize: 13 }}>Объекты</span>
+      <div className="flex items-center gap-1 flex-1 overflow-hidden">
+        <span className="text-muted-foreground text-[13px]">Объекты</span>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div className="flex items-center gap-1.5">
         <UserMenu email={email} fullName={fullName} initials={initials} />
       </div>
     </header>

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import type { SchemeRow } from '@/types/database'
 import { createSchemeAction, deleteSchemeAction, updateSchemeAction } from '@/app/actions/schemes'
 import CreateSchemeModal from './CreateSchemeModal'
+import { cn } from '@/lib/utils'
 
 interface SchemeNavSidebarProps {
   projectId: string
@@ -92,66 +93,31 @@ export default function SchemeNavSidebar({
 
       {deleteTargetId && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,.45)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
+          className="fixed inset-0 bg-black/45 flex items-center justify-center z-[1000]"
           onClick={(e) => { if (e.target === e.currentTarget) setDeleteTargetId(null) }}
           onKeyDown={(e) => { if (e.key === 'Escape') setDeleteTargetId(null) }}
         >
-          <div
-            style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 8,
-              padding: 24,
-              width: 320,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 16,
-            }}
-          >
-            <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-1)' }}>
+          <div className="bg-[var(--surface)] border border-border rounded-lg p-6 w-[320px] flex flex-col gap-4">
+            <div className="text-sm font-medium text-foreground">
               Удалить схему?
             </div>
-            <div style={{ fontSize: 13, color: 'var(--text-2)' }}>
+            <div className="text-[13px] text-muted-foreground">
               Это действие нельзя отменить.
             </div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setDeleteTargetId(null)}
-                style={{
-                  padding: '6px 14px',
-                  fontSize: 12.5,
-                  border: '1px solid var(--border)',
-                  borderRadius: 5,
-                  background: 'none',
-                  color: 'var(--text-2)',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}
+                className="px-[14px] py-[6px] text-[12.5px] border border-border rounded-[5px] bg-transparent text-muted-foreground cursor-pointer font-[inherit]"
               >
                 Отмена
               </button>
               <button
                 onClick={() => handleDelete(deleteTargetId)}
                 disabled={isPending}
-                style={{
-                  padding: '6px 14px',
-                  fontSize: 12.5,
-                  border: 'none',
-                  borderRadius: 5,
-                  background: 'var(--err)',
-                  color: '#fff',
-                  cursor: isPending ? 'not-allowed' : 'pointer',
-                  fontFamily: 'inherit',
-                  fontWeight: 500,
-                }}
+                className={cn(
+                  'px-[14px] py-[6px] text-[12.5px] border-none rounded-[5px] text-white font-medium font-[inherit]',
+                  isPending ? 'bg-[var(--text-3)] cursor-not-allowed' : 'bg-destructive cursor-pointer',
+                )}
               >
                 Удалить
               </button>
@@ -161,48 +127,19 @@ export default function SchemeNavSidebar({
       )}
 
       <nav
+        className="bg-[var(--surface)] border-r border-border flex flex-col overflow-hidden relative shrink-0"
         style={{
           width: collapsed ? 32 : 220,
           minWidth: collapsed ? 32 : 220,
-          background: 'var(--surface)',
-          borderRight: '1px solid var(--border)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          flexShrink: 0,
-          position: 'relative',
           transition: 'width .22s cubic-bezier(.4,0,.2,1), min-width .22s cubic-bezier(.4,0,.2,1)',
         }}
       >
         {/* Header */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            borderBottom: '1px solid var(--border)',
-            flexShrink: 0,
-            height: 38,
-            overflow: 'hidden',
-          }}
-        >
+        <div className="flex items-center border-b border-border shrink-0 h-[38px] overflow-hidden">
           {!collapsed && (
             <Link
               href="/dashboard"
-              style={{
-                flex: 1,
-                fontSize: 11,
-                color: 'var(--text-3)',
-                textDecoration: 'none',
-                padding: '0 8px 0 12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                transition: 'color .15s',
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--accent)')}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-3)')}
+              className="flex-1 text-[11px] text-[var(--text-3)] no-underline px-2 pl-3 flex items-center gap-1 whitespace-nowrap overflow-hidden transition-colors hover:text-[var(--accent)]"
             >
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                 <path
@@ -219,32 +156,12 @@ export default function SchemeNavSidebar({
           <button
             onClick={() => setCollapsed((c) => !c)}
             title={collapsed ? 'Развернуть панель' : 'Свернуть панель'}
-            style={{
-              width: 32,
-              minWidth: 32,
-              height: 38,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'var(--text-3)',
-              background: 'none',
-              border: 'none',
-              ...(collapsed ? { position: 'absolute', top: 3, left: 0 } : {}),
-            }}
+            className={cn(
+              'w-8 min-w-[32px] h-[38px] flex items-center justify-center cursor-pointer text-[var(--text-3)] bg-transparent border-none',
+              collapsed && 'absolute top-[3px] left-0',
+            )}
           >
-            <span
-              style={{
-                width: 20,
-                height: 20,
-                borderRadius: 5,
-                border: '1px solid var(--border)',
-                background: 'var(--bg)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+            <span className="w-5 h-5 rounded-[5px] border border-border bg-[var(--bg)] flex items-center justify-center">
               <svg
                 width="8"
                 height="12"
@@ -268,48 +185,20 @@ export default function SchemeNavSidebar({
         </div>
 
         {!collapsed && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div className="flex-1 flex flex-col overflow-hidden">
             {/* Project name */}
-            <div
-              style={{
-                padding: '10px 12px 6px',
-                fontSize: 12,
-                fontWeight: 500,
-                color: 'var(--text-1)',
-                borderBottom: '1px solid var(--border-light)',
-                flexShrink: 0,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
+            <div className="px-3 pt-[10px] pb-[6px] text-xs font-medium text-foreground border-b border-[var(--border-light)] shrink-0 overflow-hidden text-ellipsis whitespace-nowrap">
               {projectName}
             </div>
 
             {/* Schemes list */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
-              <div
-                style={{
-                  fontSize: 10,
-                  fontWeight: 600,
-                  letterSpacing: '.08em',
-                  color: 'var(--text-3)',
-                  textTransform: 'uppercase',
-                  padding: '4px 12px 4px',
-                }}
-              >
+            <div className="flex-1 overflow-y-auto py-2">
+              <div className="text-[10px] font-semibold tracking-[.08em] text-[var(--text-3)] uppercase px-3 py-1">
                 Схемы
               </div>
 
               {schemes.length === 0 ? (
-                <div
-                  style={{
-                    padding: '16px 12px',
-                    fontSize: 12,
-                    color: 'var(--text-3)',
-                    textAlign: 'center',
-                  }}
-                >
+                <div className="px-3 py-4 text-xs text-[var(--text-3)] text-center">
                   Нет схем
                 </div>
               ) : (
@@ -320,7 +209,7 @@ export default function SchemeNavSidebar({
 
                   if (renamingId === scheme.id) {
                     return (
-                      <div key={scheme.id} style={{ padding: '1px 4px' }}>
+                      <div key={scheme.id} className="py-px px-1">
                         <input
                           autoFocus
                           value={renameValue}
@@ -330,19 +219,7 @@ export default function SchemeNavSidebar({
                             if (e.key === 'Escape') setRenamingId(null)
                           }}
                           onBlur={() => setRenamingId(null)}
-                          style={{
-                            width: '100%',
-                            height: 26,
-                            padding: '0 8px',
-                            fontSize: 12,
-                            border: '1px solid var(--accent)',
-                            borderRadius: 3,
-                            background: 'var(--bg)',
-                            color: 'var(--text-1)',
-                            fontFamily: 'inherit',
-                            outline: 'none',
-                            boxSizing: 'border-box',
-                          }}
+                          className="w-full h-[26px] px-2 text-xs border border-[var(--accent)] rounded-[3px] bg-[var(--bg)] text-foreground font-[inherit] outline-none box-border"
                         />
                       </div>
                     )
@@ -351,49 +228,24 @@ export default function SchemeNavSidebar({
                   return (
                     <div
                       key={scheme.id}
-                      style={{ position: 'relative', margin: '1px 4px' }}
+                      className="relative my-px mx-1"
                       onMouseEnter={() => setHoveredId(scheme.id)}
                       onMouseLeave={() => setHoveredId(null)}
                     >
                       <Link
                         href={href}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6,
-                          height: 26,
-                          paddingLeft: 8,
-                          paddingRight: showActions ? 28 : 8,
-                          borderRadius: 3,
-                          textDecoration: 'none',
-                          background: isActive
-                            ? 'var(--accent-bg)'
-                            : showActions
-                            ? 'var(--bg)'
-                            : 'transparent',
-                          transition: 'background .1s',
-                        }}
+                        className={cn(
+                          'flex items-center gap-1.5 h-[26px] pl-2 rounded-[3px] no-underline transition-colors duration-100',
+                          isActive ? 'bg-accent pr-2' : showActions ? 'bg-[var(--bg)] pr-7' : 'bg-transparent pr-2',
+                        )}
                       >
-                        <span
-                          style={{
-                            fontSize: 10,
-                            color: isActive ? 'var(--accent)' : 'var(--text-3)',
-                            flexShrink: 0,
-                          }}
-                        >
+                        <span className={cn('text-[10px] shrink-0', isActive ? 'text-[var(--accent)]' : 'text-[var(--text-3)]')}>
                           ⊞
                         </span>
-                        <span
-                          style={{
-                            fontSize: 12,
-                            color: isActive ? 'var(--accent)' : 'var(--text-1)',
-                            fontWeight: isActive ? 500 : 300,
-                            flex: 1,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
+                        <span className={cn(
+                          'text-xs flex-1 overflow-hidden text-ellipsis whitespace-nowrap',
+                          isActive ? 'text-[var(--accent)] font-medium' : 'text-foreground font-light',
+                        )}>
                           {scheme.device_name ?? 'Без названия'}
                         </span>
                       </Link>
@@ -405,34 +257,10 @@ export default function SchemeNavSidebar({
                             e.stopPropagation()
                             setMenuOpenId(menuOpenId === scheme.id ? null : scheme.id)
                           }}
-                          style={{
-                            position: 'absolute',
-                            right: 4,
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            width: 20,
-                            height: 20,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            background:
-                              menuOpenId === scheme.id ? 'var(--border)' : 'transparent',
-                            border: 'none',
-                            borderRadius: 3,
-                            cursor: 'pointer',
-                            color: 'var(--text-2)',
-                            padding: 0,
-                            transition: 'background .1s',
-                          }}
-                          onMouseEnter={(e) => {
-                            if (menuOpenId !== scheme.id)
-                              (e.currentTarget as HTMLElement).style.background =
-                                'var(--border-light)'
-                          }}
-                          onMouseLeave={(e) => {
-                            if (menuOpenId !== scheme.id)
-                              (e.currentTarget as HTMLElement).style.background = 'transparent'
-                          }}
+                          className={cn(
+                            'absolute right-1 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center border-none rounded-[3px] cursor-pointer text-muted-foreground p-0 transition-colors duration-100',
+                            menuOpenId === scheme.id ? 'bg-border' : 'bg-transparent hover:bg-[var(--border-light)]',
+                          )}
                         >
                           <svg width="3" height="13" viewBox="0 0 3 13" fill="currentColor">
                             <circle cx="1.5" cy="1.5" r="1.5" />
@@ -445,64 +273,22 @@ export default function SchemeNavSidebar({
                       {menuOpenId === scheme.id && (
                         <div
                           ref={menuRef}
-                          style={{
-                            position: 'absolute',
-                            right: 0,
-                            top: '100%',
-                            zIndex: 200,
-                            background: 'var(--surface)',
-                            border: '1px solid var(--border)',
-                            borderRadius: 5,
-                            boxShadow: '0 4px 12px rgba(0,0,0,.1)',
-                            minWidth: 150,
-                            overflow: 'hidden',
-                            padding: '2px 0',
-                          }}
+                          className="absolute right-0 top-full z-[200] bg-[var(--surface)] border border-border rounded-[5px] shadow-[0_4px_12px_rgba(0,0,0,.1)] min-w-[150px] overflow-hidden py-0.5"
                         >
                           {(
                             [
-                              {
-                                label: 'Переименовать',
-                                action: () => startRename(scheme),
-                              },
-                              {
-                                label: 'Изменить',
-                                action: () => {
-                                  router.push(href)
-                                  setMenuOpenId(null)
-                                },
-                              },
-                              {
-                                label: 'Удалить',
-                                danger: true,
-                                action: () => {
-                                  setDeleteTargetId(scheme.id)
-                                  setMenuOpenId(null)
-                                },
-                              },
+                              { label: 'Переименовать', action: () => startRename(scheme) },
+                              { label: 'Изменить', action: () => { router.push(href); setMenuOpenId(null) } },
+                              { label: 'Удалить', danger: true, action: () => { setDeleteTargetId(scheme.id); setMenuOpenId(null) } },
                             ] as const
                           ).map((item) => (
                             <button
                               key={item.label}
                               onClick={item.action}
-                              style={{
-                                width: '100%',
-                                textAlign: 'left',
-                                padding: '6px 12px',
-                                fontSize: 12,
-                                color: 'danger' in item && item.danger ? 'var(--err)' : 'var(--text-1)',
-                                background: 'none',
-                                border: 'none',
-                                cursor: 'pointer',
-                                fontFamily: 'inherit',
-                                display: 'block',
-                              }}
-                              onMouseEnter={(e) => {
-                                ;(e.currentTarget as HTMLElement).style.background = 'var(--bg)'
-                              }}
-                              onMouseLeave={(e) => {
-                                ;(e.currentTarget as HTMLElement).style.background = 'none'
-                              }}
+                              className={cn(
+                                'w-full text-left px-3 py-[6px] text-xs bg-transparent border-none cursor-pointer font-[inherit] block transition-colors hover:bg-[var(--bg)]',
+                                'danger' in item && item.danger ? 'text-destructive' : 'text-foreground',
+                              )}
                             >
                               {item.label}
                             </button>
@@ -516,43 +302,16 @@ export default function SchemeNavSidebar({
             </div>
 
             {/* Create scheme button */}
-            <div
-              style={{
-                padding: '8px',
-                borderTop: '1px solid var(--border-light)',
-                flexShrink: 0,
-              }}
-            >
+            <div className="p-2 border-t border-[var(--border-light)] shrink-0">
               <button
                 onClick={() => setShowModal(true)}
                 disabled={isPending}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '5px 8px',
-                  fontSize: 12,
-                  color: isPending ? 'var(--text-3)' : 'var(--text-2)',
-                  background: 'none',
-                  border: '1px dashed var(--border)',
-                  borderRadius: 4,
-                  cursor: isPending ? 'not-allowed' : 'pointer',
-                  fontFamily: 'inherit',
-                  transition: 'color .15s, border-color .15s',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isPending) {
-                    const el = e.currentTarget as HTMLElement
-                    el.style.color = 'var(--accent)'
-                    el.style.borderColor = 'var(--accent)'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  const el = e.currentTarget as HTMLElement
-                  el.style.color = 'var(--text-2)'
-                  el.style.borderColor = 'var(--border)'
-                }}
+                className={cn(
+                  'w-full flex items-center gap-1.5 px-2 py-[5px] text-xs border border-dashed border-border rounded-[4px] bg-transparent font-[inherit] transition-colors duration-150',
+                  isPending
+                    ? 'text-[var(--text-3)] cursor-not-allowed'
+                    : 'text-muted-foreground cursor-pointer hover:text-[var(--accent)] hover:border-[var(--accent)]',
+                )}
               >
                 <svg
                   width="11"

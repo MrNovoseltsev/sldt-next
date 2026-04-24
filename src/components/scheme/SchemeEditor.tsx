@@ -9,6 +9,7 @@ import { saveSchemeHeaderAction, saveAllLinesAction } from '@/app/actions/scheme
 import { deleteSchemeAction } from '@/app/actions/schemes';
 import SchemeHeaderForm from './SchemeHeaderForm'
 import SchemeLinesTable from './SchemeLinesTable'
+import { cn } from '@/lib/utils'
 
 function newLine(schemeId: string, order: number): SchemeLineRow {
   return {
@@ -217,65 +218,30 @@ export default function SchemeEditor({ scheme, lines: initialLines, projectId, p
     <>
       {showDeleteConfirm && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,.45)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
+          className="fixed inset-0 bg-black/45 flex items-center justify-center z-[1000]"
           onClick={(e) => { if (e.target === e.currentTarget) setShowDeleteConfirm(false); }}
         >
-          <div
-            style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 8,
-              padding: 24,
-              width: 360,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-            }}
-          >
-            <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-1)' }}>
+          <div className="bg-[var(--surface)] border border-border rounded-lg p-6 w-[360px] flex flex-col gap-3">
+            <div className="text-sm font-medium text-foreground">
               Удалить схему?
             </div>
-            <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>
+            <div className="text-[13px] text-muted-foreground leading-[1.5]">
               «{schemeName}» будет удалена без возможности восстановления.
             </div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
+            <div className="flex gap-2 justify-end mt-1">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                style={{
-                  padding: '6px 14px',
-                  fontSize: 12.5,
-                  border: '1px solid var(--border)',
-                  borderRadius: 5,
-                  background: 'none',
-                  color: 'var(--text-2)',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}
+                className="px-[14px] py-[6px] text-[12.5px] border border-border rounded-[5px] bg-transparent text-muted-foreground cursor-pointer font-[inherit]"
               >
                 Отмена
               </button>
               <button
                 onClick={handleConfirmDelete}
                 disabled={isPending}
-                style={{
-                  padding: '6px 14px',
-                  fontSize: 12.5,
-                  border: 'none',
-                  borderRadius: 5,
-                  background: isPending ? 'var(--text-3)' : 'var(--err, #e53935)',
-                  color: '#fff',
-                  cursor: isPending ? 'not-allowed' : 'pointer',
-                  fontFamily: 'inherit',
-                  fontWeight: 500,
-                }}
+                className={cn(
+                  'px-[14px] py-[6px] text-[12.5px] border-none rounded-[5px] text-white font-medium font-[inherit]',
+                  isPending ? 'bg-[var(--text-3)] cursor-not-allowed' : 'bg-destructive cursor-pointer',
+                )}
               >
                 {isPending ? 'Удаление…' : 'Удалить'}
               </button>
@@ -283,194 +249,79 @@ export default function SchemeEditor({ scheme, lines: initialLines, projectId, p
           </div>
         </div>
       )}
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      {/* Form header */}
-      <div
-        style={{
-          background: 'var(--surface)',
-          borderBottom: '1px solid var(--border)',
-          padding: '0 20px',
-          height: 46,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          flexShrink: 0,
-        }}
-      >
-        <div style={{ flex: 1, overflow: 'hidden' }}>
-          <div
-            style={{
-              fontSize: 14,
-              fontWeight: 500,
-              color: 'var(--text-1)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
+      <div className="flex flex-col h-full overflow-hidden">
+        {/* Form header */}
+        <div className="bg-[var(--surface)] border-b border-border px-5 h-[46px] flex items-center gap-[10px] shrink-0">
+          <div className="flex-1 overflow-hidden">
+            <div className="text-sm font-medium text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
               {schemeName}
+            </div>
+            <div className="text-[11px] text-[var(--text-3)] mt-px">
+              ГОСТ 21.613-2014 · {projectName}
+            </div>
           </div>
-          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>
-            ГОСТ 21.613-2014 · {projectName}
-          </div>
-        </div>
 
-        {/* Save indicator */}
-        {dirty && !savedMsg && (
-          <span
-            style={{
-              fontSize: 11,
-              color: 'var(--text-3)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <span
-              style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }}
-            />
-            Не сохранено
-          </span>
-        )}
-        {savedMsg && (
-          <span style={{ fontSize: 11, color: 'var(--status-ok-text)', whiteSpace: 'nowrap' }}>
-            ✓ Сохранено
-          </span>
-        )}
-        {saveError && (
-          <span style={{ fontSize: 11, color: 'var(--err)', whiteSpace: 'nowrap' }}>
-            Ошибка: {saveError}
-          </span>
-        )}
+          {/* Save indicator */}
+          {dirty && !savedMsg && (
+            <span className="text-[11px] text-[var(--text-3)] flex items-center gap-1 whitespace-nowrap">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] shrink-0" />
+              Не сохранено
+            </span>
+          )}
+          {savedMsg && (
+            <span className="text-[11px] text-[var(--status-ok-text)] whitespace-nowrap">
+              ✓ Сохранено
+            </span>
+          )}
+          {saveError && (
+            <span className="text-[11px] text-destructive whitespace-nowrap">
+              Ошибка: {saveError}
+            </span>
+          )}
 
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-          <a
-            href={`/api/pdf/${scheme.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5,
-              border: '1px solid var(--border)',
-              color: 'var(--text-2)',
-              borderRadius: 5,
-              padding: '5px 10px',
-              fontSize: 12,
-              background: 'none',
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
-              transition: 'border-color .15s, color .15s',
-            }}
-            onMouseEnter={(e) => {
-              const el = e.currentTarget as HTMLElement
-              el.style.borderColor = 'var(--text-2)'
-              el.style.color = 'var(--text-1)'
-            }}
-            onMouseLeave={(e) => {
-              const el = e.currentTarget as HTMLElement
-              el.style.borderColor = 'var(--border)'
-              el.style.color = 'var(--text-2)'
-            }}
-          >
-            PDF
-          </a>
-          <button
-            onClick={handleSave}
-            disabled={isPending}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              background: isPending ? 'var(--text-3)' : 'var(--accent)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 5,
-              padding: '6px 13px',
-              fontSize: 12.5,
-              fontWeight: 500,
-              cursor: isPending ? 'not-allowed' : 'pointer',
-              fontFamily: 'inherit',
-              transition: 'background .15s',
-              whiteSpace: 'nowrap',
-            }}
-            onMouseEnter={(e) => {
-              if (!isPending) (e.currentTarget as HTMLElement).style.background = 'var(--accent-hover)'
-            }}
-            onMouseLeave={(e) => {
-              if (!isPending) (e.currentTarget as HTMLElement).style.background = 'var(--accent)'
-            }}
-          >
-            {isPending ? 'Сохранение…' : 'Сохранить'}
-          </button>
+          <div className="flex gap-1.5 shrink-0">
+            <a
+              href={`/api/pdf/${scheme.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-[5px] border border-border text-muted-foreground rounded-[5px] px-[10px] py-[5px] text-xs bg-transparent no-underline whitespace-nowrap transition-colors duration-150 hover:border-[var(--text-2)] hover:text-foreground"
+            >
+              PDF
+            </a>
+            <button
+              onClick={handleSave}
+              disabled={isPending}
+              className={cn(
+                'flex items-center gap-1.5 text-white border-none rounded-[5px] px-[13px] py-[6px] text-[12.5px] font-medium font-[inherit] whitespace-nowrap transition-colors duration-150',
+                isPending
+                  ? 'bg-[var(--text-3)] cursor-not-allowed'
+                  : 'bg-[var(--accent)] cursor-pointer hover:enabled:bg-[var(--accent-hover)]',
+              )}
+            >
+              {isPending ? 'Сохранение…' : 'Сохранить'}
+            </button>
             <button
               onClick={handleDelete}
               disabled={isPending}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                border: '1px solid var(--border)',
-                color: 'var(--text-2)',
-                borderRadius: 5,
-                padding: '5px 10px',
-                fontSize: 12,
-                background: 'none',
-                cursor: isPending ? 'not-allowed' : 'pointer',
-                fontFamily: 'inherit',
-                whiteSpace: 'nowrap',
-                transition: 'border-color .15s, color .15s',
-              }}
-              onMouseEnter={(e) => {
-                if (!isPending) {
-                  const el = e.currentTarget as HTMLElement;
-                  el.style.borderColor = 'var(--err, #e53935)';
-                  el.style.color = 'var(--err, #e53935)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.borderColor = 'var(--border)';
-                el.style.color = 'var(--text-2)';
-              }}
+              className={cn(
+                'flex items-center border border-border text-muted-foreground rounded-[5px] px-[10px] py-[5px] text-xs bg-transparent font-[inherit] whitespace-nowrap transition-colors duration-150',
+                isPending ? 'cursor-not-allowed' : 'cursor-pointer hover:border-destructive hover:text-destructive',
+              )}
             >
               Удалить
             </button>
+          </div>
         </div>
-      </div>
 
-      {/* Tab bar */}
-      <div
-        style={{
-          background: 'var(--surface)',
-          borderBottom: '1px solid var(--border)',
-          padding: '0 20px',
-            display: 'flex',
-          flexShrink: 0,
-        }}
-        >
-        <button
-            style={{
-              fontSize: 12.5,
-              color: 'var(--accent)',
-              padding: '10px 14px',
-              cursor: 'default',
-              fontWeight: 500,
-              background: 'none',
-              border: 'none',
-              borderBottomWidth: 2,
-              borderBottomStyle: 'solid',
-              borderBottomColor: 'var(--accent)',
-              fontFamily: 'inherit',
-              whiteSpace: 'nowrap',
-            }}
-        >
+        {/* Tab bar */}
+        <div className="bg-[var(--surface)] border-b border-border px-5 flex shrink-0">
+          <button className="text-[12.5px] text-[var(--accent)] px-[14px] py-[10px] cursor-default font-medium bg-transparent border-none border-b-2 border-b-[var(--accent)] font-[inherit] whitespace-nowrap">
             Форма ГОСТ
-        </button>
-      </div>
+          </button>
+        </div>
 
-      {/* Content */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto">
           <SchemeHeaderForm scheme={localScheme} totals={totals} onChange={handleSchemeChange} />
           <SchemeLinesTable
             lines={localLines}
@@ -478,8 +329,8 @@ export default function SchemeEditor({ scheme, lines: initialLines, projectId, p
             onAddLine={handleAddLine}
             onDeleteLine={handleDeleteLine}
           />
+        </div>
       </div>
-    </div>
     </>
   )
 }

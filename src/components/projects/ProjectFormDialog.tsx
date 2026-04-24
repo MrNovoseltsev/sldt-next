@@ -14,6 +14,7 @@ import { createProjectSchema, updateProjectSchema } from '@/lib/validations/proj
 import type { CreateProjectInput, UpdateProjectInput } from '@/lib/validations/project'
 import { createProjectAction, updateProjectAction } from '@/app/actions/projects'
 import type { ProjectRow } from '@/types/database'
+import { cn } from '@/lib/utils'
 
 interface ProjectFormDialogProps {
   mode: 'create' | 'edit'
@@ -72,116 +73,67 @@ export default function ProjectFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent style={{ maxWidth: 420 }}>
+      <DialogContent className="max-w-[420px]">
         <DialogHeader>
-          <DialogTitle style={{ fontSize: 14, fontWeight: 600 }}>
+          <DialogTitle className="text-sm font-semibold">
             {mode === 'create' ? 'Новый объект' : 'Редактировать объект'}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '4px 0 16px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-              <label style={{ fontSize: 11, color: 'var(--text-2)' }}>
-                Название объекта <span style={{ color: 'var(--err)' }}>*</span>
+          <div className="flex flex-col gap-[14px] py-1 pb-4">
+            <div className="flex flex-col gap-[5px]">
+              <label className="text-[11px] text-muted-foreground">
+                Название объекта <span className="text-destructive">*</span>
               </label>
               <input
                 {...register('name')}
                 placeholder="Например: Офис на Тверской"
                 autoFocus
-                style={{
-                  border: `1px solid ${errors.name ? 'var(--err)' : 'var(--border)'}`,
-                  borderRadius: 5,
-                  padding: '7px 10px',
-                  fontSize: 13,
-                  color: 'var(--text-1)',
-                  background: 'var(--bg)',
-                  outline: 'none',
-                  fontFamily: 'inherit',
-                  transition: 'border-color .15s',
-                }}
-                onFocus={(e) => {
-                  if (!errors.name) e.currentTarget.style.borderColor = 'var(--accent)'
-                }}
-                onBlur={(e) => {
-                  if (!errors.name) e.currentTarget.style.borderColor = 'var(--border)'
-                }}
+                className={cn(
+                  'border rounded-[5px] px-[10px] py-[7px] text-[13px] text-foreground bg-[var(--bg)] outline-none font-[inherit] transition-colors',
+                  errors.name
+                    ? 'border-destructive focus:border-destructive'
+                    : 'border-border focus:border-[var(--accent)]',
+                )}
               />
               {errors.name && (
-                <span style={{ fontSize: 11, color: 'var(--err)' }}>{errors.name.message}</span>
+                <span className="text-[11px] text-destructive">{errors.name.message}</span>
               )}
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-              <label style={{ fontSize: 11, color: 'var(--text-2)' }}>Заказчик</label>
+            <div className="flex flex-col gap-[5px]">
+              <label className="text-[11px] text-muted-foreground">Заказчик</label>
               <input
                 {...register('customer')}
                 placeholder="Наименование организации"
-                style={{
-                  border: '1px solid var(--border)',
-                  borderRadius: 5,
-                  padding: '7px 10px',
-                  fontSize: 13,
-                  color: 'var(--text-1)',
-                  background: 'var(--bg)',
-                  outline: 'none',
-                  fontFamily: 'inherit',
-                  transition: 'border-color .15s',
-                }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent)')}
-                onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+                className="border border-border rounded-[5px] px-[10px] py-[7px] text-[13px] text-foreground bg-[var(--bg)] outline-none font-[inherit] transition-colors focus:border-[var(--accent)]"
               />
             </div>
 
             {errors.root && (
-              <div
-                style={{
-                  fontSize: 12,
-                  color: 'var(--err)',
-                  background: 'var(--err-bg)',
-                  padding: '7px 10px',
-                  borderRadius: 5,
-                }}
-              >
+              <div className="text-xs text-destructive bg-[var(--err-bg)] px-[10px] py-[7px] rounded-[5px]">
                 {errors.root.message}
               </div>
             )}
           </div>
 
-          <DialogFooter style={{ gap: 8 }}>
+          <DialogFooter className="gap-2">
             <button
               type="button"
               onClick={() => handleOpenChange(false)}
               disabled={isPending}
-              style={{
-                border: '1px solid var(--border)',
-                borderRadius: 5,
-                padding: '6px 14px',
-                fontSize: 12,
-                color: 'var(--text-2)',
-                background: 'none',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                transition: 'border-color .15s, color .15s',
-              }}
+              className="border border-border rounded-[5px] px-[14px] py-[6px] text-xs text-muted-foreground bg-transparent cursor-pointer font-[inherit] transition-colors"
             >
               Отмена
             </button>
             <button
               type="submit"
               disabled={isPending}
-              style={{
-                background: isPending ? 'var(--text-3)' : 'var(--accent)',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 5,
-                padding: '6px 16px',
-                fontSize: 12,
-                fontWeight: 500,
-                cursor: isPending ? 'not-allowed' : 'pointer',
-                fontFamily: 'inherit',
-                transition: 'background .15s',
-              }}
+              className={cn(
+                'border-none rounded-[5px] px-[16px] py-[6px] text-xs text-white font-medium font-[inherit] transition-colors',
+                isPending ? 'bg-[var(--text-3)] cursor-not-allowed' : 'bg-[var(--accent)] cursor-pointer',
+              )}
             >
               {isPending ? 'Сохранение…' : 'Сохранить'}
             </button>

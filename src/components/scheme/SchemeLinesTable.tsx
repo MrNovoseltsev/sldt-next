@@ -1,55 +1,8 @@
 import { useState } from 'react'
 import type { SchemeLineRow } from '@/types/database'
+import { cn } from '@/lib/utils'
 
 const CURVES = ['', 'A', 'B', 'C', 'D', 'K'] as const
-
-const th1: React.CSSProperties = {
-  background: 'var(--bg)',
-  fontSize: 10,
-  fontWeight: 600,
-  letterSpacing: '.05em',
-  textTransform: 'uppercase',
-  color: 'var(--text-2)',
-  padding: '6px 10px',
-  textAlign: 'center',
-  border: '1px solid var(--border-light)',
-  whiteSpace: 'nowrap',
-}
-const th2: React.CSSProperties = {
-  background: 'var(--bg)',
-  fontSize: 10,
-  color: 'var(--text-3)',
-  padding: '4px 8px',
-  fontWeight: 400,
-  whiteSpace: 'nowrap',
-  textAlign: 'center',
-  border: '1px solid var(--border-light)',
-}
-const td: React.CSSProperties = {
-  height: 36,
-  border: '1px solid var(--border-light)',
-  padding: 0,
-}
-const cellInput = (mono?: boolean): React.CSSProperties => ({
-  border: 'none',
-  outline: 'none',
-  width: '100%',
-  height: '100%',
-  padding: '0 8px',
-  fontSize: 12,
-  color: 'var(--text-1)',
-  background: 'transparent',
-  fontFamily: mono ? 'var(--font-mono)' : 'inherit',
-  fontVariantNumeric: 'slashed-zero',
-  textAlign: mono ? 'center' : undefined,
-})
-
-interface SchemeLinesTableProps {
-  lines: SchemeLineRow[]
-  onLineChange: (id: string, field: keyof SchemeLineRow, value: string) => void
-  onAddLine: () => void
-  onDeleteLine: (id: string) => void
-}
 
 function CellInput({
   value,
@@ -68,9 +21,12 @@ function CellInput({
       value={value ?? ''}
       placeholder={focused ? '' : (placeholder ?? '')}
       onChange={(e) => onChange(e.target.value)}
-      style={cellInput(mono)}
-      onFocus={(e) => { setFocused(true); e.currentTarget.style.background = 'var(--accent-bg)' }}
-      onBlur={(e) => { setFocused(false); e.currentTarget.style.background = 'transparent' }}
+      className={cn(
+        'border-none outline-none w-full h-full px-[8px] text-xs text-foreground bg-transparent font-[inherit] slashed-zero focus:bg-accent',
+        mono && 'font-mono text-center',
+      )}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
     />
   )
 }
@@ -88,12 +44,7 @@ function CellSelect({
     <select
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value)}
-      style={{
-        ...cellInput(),
-        cursor: 'pointer',
-      }}
-      onFocus={(e) => (e.currentTarget.style.background = 'var(--accent-bg)')}
-      onBlur={(e) => (e.currentTarget.style.background = 'transparent')}
+      className="border-none outline-none w-full h-full px-[8px] text-xs text-foreground bg-transparent font-[inherit] cursor-pointer focus:bg-accent"
     >
       {options.map((o) => (
         <option key={o} value={o}>
@@ -104,6 +55,13 @@ function CellSelect({
   )
 }
 
+interface SchemeLinesTableProps {
+  lines: SchemeLineRow[]
+  onLineChange: (id: string, field: keyof SchemeLineRow, value: string) => void
+  onAddLine: () => void
+  onDeleteLine: (id: string) => void
+}
+
 export default function SchemeLinesTable({
   lines,
   onLineChange,
@@ -112,58 +70,21 @@ export default function SchemeLinesTable({
 }: SchemeLinesTableProps) {
   const upd = (id: string, field: keyof SchemeLineRow) => (v: string) => onLineChange(id, field, v)
 
+  const th1 = 'bg-[var(--bg)] text-[10px] font-semibold tracking-[.05em] uppercase text-muted-foreground px-[10px] py-[6px] text-center border border-[var(--border-light)] whitespace-nowrap'
+  const th2 = 'bg-[var(--bg)] text-[10px] text-[var(--text-3)] px-[8px] py-[4px] font-normal whitespace-nowrap text-center border border-[var(--border-light)]'
+  const tdBase = 'h-9 border border-[var(--border-light)] p-0'
+
   return (
-    <div style={{ background: 'var(--surface)' }}>
+    <div className="bg-[var(--surface)]">
       {/* Section header */}
-      <div
-        style={{
-          padding: '10px 20px 9px',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          background: 'var(--bg)',
-        }}
-      >
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 600,
-            letterSpacing: '.06em',
-            textTransform: 'uppercase',
-            color: 'var(--text-2)',
-            flex: 1,
-          }}
-        >
+      <div className="px-5 pt-[10px] pb-[9px] border-b border-border flex items-center gap-[10px] bg-[var(--bg)]">
+        <span className="text-[10px] font-semibold tracking-[.06em] uppercase text-muted-foreground flex-1">
           Линии и электроприёмники
         </span>
-        <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{lines.length} записей</span>
+        <span className="text-[11px] text-[var(--text-3)]">{lines.length} записей</span>
         <button
           onClick={onAddLine}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 5,
-            border: '1px solid var(--border)',
-            color: 'var(--text-2)',
-            borderRadius: 5,
-            padding: '4px 9px',
-            fontSize: 11.5,
-            background: 'none',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            transition: 'border-color .15s, color .15s',
-          }}
-          onMouseEnter={(e) => {
-            const el = e.currentTarget as HTMLElement
-            el.style.borderColor = 'var(--text-2)'
-            el.style.color = 'var(--text-1)'
-          }}
-          onMouseLeave={(e) => {
-            const el = e.currentTarget as HTMLElement
-            el.style.borderColor = 'var(--border)'
-            el.style.color = 'var(--text-2)'
-          }}
+          className="flex items-center gap-[5px] border border-border text-muted-foreground rounded-[5px] px-[9px] py-[4px] text-[11.5px] bg-transparent cursor-pointer font-[inherit] transition-colors duration-150 hover:border-[var(--text-2)] hover:text-foreground"
         >
           <svg
             width="11"
@@ -181,41 +102,35 @@ export default function SchemeLinesTable({
       </div>
 
       {/* Table */}
-      <div style={{ overflowX: 'auto' }}>
-        <table
-          style={{
-            borderCollapse: 'collapse',
-            width: 'max-content',
-            minWidth: '100%',
-          }}
-        >
+      <div className="overflow-x-auto">
+        <table className="border-collapse w-max min-w-full">
           <thead>
             <tr>
-              <th rowSpan={2} style={{ ...th1, width: 32, minWidth: 32 }}>
+              <th rowSpan={2} className={cn(th1, 'w-8 min-w-[32px]')}>
                 №
               </th>
-              <th colSpan={6} style={th1}>
+              <th colSpan={6} className={th1}>
                 Аппарат отходящей линии (ввода)
               </th>
-              <th colSpan={3} style={th1}>
+              <th colSpan={3} className={th1}>
                 Кабель, провод
               </th>
-              <th colSpan={2} style={th1}>
+              <th colSpan={2} className={th1}>
                 Труба
               </th>
-              <th style={th1}>
+              <th className={th1}>
                 Руст/
                 <br />
                 Рном, кВт
               </th>
-              <th colSpan={3} style={th1}>
+              <th colSpan={3} className={th1}>
                 Iном по фазам, А
               </th>
-              <th style={th1}>cos φ</th>
-              <th colSpan={3} style={th1}>
+              <th className={th1}>cos φ</th>
+              <th colSpan={3} className={th1}>
                 Электроприёмник
               </th>
-              <th rowSpan={2} style={{ ...th1, width: 30 }} />
+              <th rowSpan={2} className={cn(th1, 'w-[30px]')} />
             </tr>
             <tr>
               {[
@@ -239,7 +154,7 @@ export default function SchemeLinesTable({
                 'Чертёж схемы',
                 'Обозначение',
               ].map((h, i) => (
-                <th key={i} style={th2}>
+                <th key={i} className={th2}>
                   {h}
                 </th>
               ))}
@@ -248,140 +163,89 @@ export default function SchemeLinesTable({
           <tbody>
             {lines.length > 0 && (
               lines.map((line, idx) => (
-                <tr
-                  key={line.id}
-                  onMouseEnter={(e) => {
-                    Array.from((e.currentTarget as HTMLElement).querySelectorAll('td')).forEach(
-                      (cell) => {
-                        if (!(cell.querySelector('input:focus, select:focus')))
-                          (cell as HTMLElement).style.background = '#f4f3f0'
-                      },
-                    )
-                  }}
-                  onMouseLeave={(e) => {
-                    Array.from((e.currentTarget as HTMLElement).querySelectorAll('td')).forEach(
-                      (cell) => {
-                        if (!(cell.querySelector('input:focus, select:focus')))
-                          (cell as HTMLElement).style.background = 'transparent'
-                      },
-                    )
-                  }}
-                >
+                <tr key={line.id} className="[&:hover_td]:bg-[#f4f3f0]">
                   {/* Row number */}
-                  <td
-                    style={{
-                      ...td,
-                      textAlign: 'center',
-                      fontSize: 11,
-                      color: 'var(--text-3)',
-                      width: 32,
-                      minWidth: 32,
-                      background: 'var(--bg)',
-                      userSelect: 'none',
-                    }}
-                  >
+                  <td className={cn(tdBase, 'text-center text-[11px] text-[var(--text-3)] w-8 min-w-[32px] bg-[var(--bg)] select-none')}>
                     {idx + 1}
                   </td>
 
                   {/* Circuit breaker */}
-                  <td style={{ ...td, minWidth: 60 }}>
+                  <td className={cn(tdBase, 'min-w-[60px]')}>
                     <CellInput value={line.circuit_breaker_designation} onChange={upd(line.id, 'circuit_breaker_designation')} placeholder="QFx" />
                   </td>
-                  <td style={{ ...td, minWidth: 160 }}>
+                  <td className={cn(tdBase, 'min-w-[160px]')}>
                     <CellInput value={line.circuit_breaker_type} onChange={upd(line.id, 'circuit_breaker_type')} placeholder="Тип" />
                   </td>
-                  <td style={{ ...td, minWidth: 60 }}>
+                  <td className={cn(tdBase, 'min-w-[60px]')}>
                     <CellInput value={line.cb_nominal_current} onChange={upd(line.id, 'cb_nominal_current')} placeholder="А" mono />
                   </td>
-                  <td style={{ ...td, minWidth: 60 }}>
+                  <td className={cn(tdBase, 'min-w-[60px]')}>
                     <CellInput value={line.cb_trip_setting} onChange={upd(line.id, 'cb_trip_setting')} placeholder="А" mono />
                   </td>
-                  <td style={{ ...td, minWidth: 60 }}>
+                  <td className={cn(tdBase, 'min-w-[60px]')}>
                     <CellSelect value={line.cb_protection_type} options={CURVES} onChange={upd(line.id, 'cb_protection_type')} />
                   </td>
-                  <td style={{ ...td, minWidth: 60 }}>
+                  <td className={cn(tdBase, 'min-w-[60px]')}>
                     <CellInput value={line.cb_differential_current} onChange={upd(line.id, 'cb_differential_current')} placeholder="мА" mono />
                   </td>
 
                   {/* Cable */}
-                  <td style={{ ...td, minWidth: 60 }}>
+                  <td className={cn(tdBase, 'min-w-[60px]')}>
                     <CellInput value={line.cable_designation} onChange={upd(line.id, 'cable_designation')} placeholder="Wn" />
                   </td>
-                  <td style={{ ...td, minWidth: 90 }}>
+                  <td className={cn(tdBase, 'min-w-[90px]')}>
                     <CellInput value={line.cable_brand} onChange={upd(line.id, 'cable_brand')} placeholder="Марка" />
                   </td>
-                  <td style={{ ...td, minWidth: 60 }}>
+                  <td className={cn(tdBase, 'min-w-[60px]')}>
                     <CellInput value={line.cable_length} onChange={upd(line.id, 'cable_length')} placeholder="м" mono />
                   </td>
 
                   {/* Pipe */}
-                  <td style={{ ...td, minWidth: 90 }}>
+                  <td className={cn(tdBase, 'min-w-[90px]')}>
                     <CellInput value={line.pipe_designation} onChange={upd(line.id, 'pipe_designation')} placeholder="—" />
                   </td>
-                  <td style={{ ...td, minWidth: 60 }}>
+                  <td className={cn(tdBase, 'min-w-[60px]')}>
                     <CellInput value={line.pipe_length} onChange={upd(line.id, 'pipe_length')} placeholder="м" mono />
                   </td>
 
                   {/* Power */}
-                  <td style={{ ...td, minWidth: 60 }}>
+                  <td className={cn(tdBase, 'min-w-[60px]')}>
                     <CellInput value={line.power_kw} onChange={upd(line.id, 'power_kw')} placeholder="кВт" mono />
                   </td>
 
                   {/* Phase currents */}
-                  <td style={{ ...td, minWidth: 60 }}>
+                  <td className={cn(tdBase, 'min-w-[60px]')}>
                     <CellInput value={line.phase_a_current} onChange={upd(line.id, 'phase_a_current')} placeholder="А" mono />
                   </td>
-                  <td style={{ ...td, minWidth: 60 }}>
+                  <td className={cn(tdBase, 'min-w-[60px]')}>
                     <CellInput value={line.phase_b_current} onChange={upd(line.id, 'phase_b_current')} placeholder="А" mono />
                   </td>
-                  <td style={{ ...td, minWidth: 60 }}>
+                  <td className={cn(tdBase, 'min-w-[60px]')}>
                     <CellInput value={line.phase_c_current} onChange={upd(line.id, 'phase_c_current')} placeholder="А" mono />
                   </td>
 
                   {/* cos phi */}
-                  <td style={{ ...td, minWidth: 60 }}>
+                  <td className={cn(tdBase, 'min-w-[60px]')}>
                     <CellInput value={line.cos_phi} onChange={upd(line.id, 'cos_phi')} placeholder="0.xx" mono />
                   </td>
 
                   {/* Load */}
-                  <td style={{ ...td, minWidth: 160 }}>
+                  <td className={cn(tdBase, 'min-w-[160px]')}>
                     <CellInput value={line.load_name} onChange={upd(line.id, 'load_name')} placeholder="Наименование" />
                   </td>
-                  <td style={{ ...td, minWidth: 90 }}>
+                  <td className={cn(tdBase, 'min-w-[90px]')}>
                     <CellInput value={line.load_drawing} onChange={upd(line.id, 'load_drawing')} placeholder="Ссылка" />
                   </td>
-                  <td style={{ ...td, minWidth: 90 }}>
+                  <td className={cn(tdBase, 'min-w-[90px]')}>
                     <CellInput value={line.load_type} onChange={upd(line.id, 'load_type')} placeholder="Тип" />
                   </td>
 
                   {/* Delete */}
-                  <td style={{ ...td, width: 30 }}>
+                  <td className={cn(tdBase, 'w-[30px]')}>
                     <button
                       onClick={() => onDeleteLine(line.id)}
                       title="Удалить строку"
-                      style={{
-                        width: '100%',
-                        height: 36,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'var(--text-3)',
-                        fontSize: 16,
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        transition: 'color .12s, background .12s',
-                      }}
-                      onMouseEnter={(e) => {
-                        const el = e.currentTarget as HTMLElement
-                        el.style.color = 'var(--err)'
-                        el.style.background = 'var(--err-bg)'
-                      }}
-                      onMouseLeave={(e) => {
-                        const el = e.currentTarget as HTMLElement
-                        el.style.color = 'var(--text-3)'
-                        el.style.background = 'none'
-                      }}
+                      className="w-full h-9 flex items-center justify-center text-[var(--text-3)] text-base bg-transparent border-none cursor-pointer transition-colors duration-[120ms] hover:text-destructive hover:bg-[var(--err-bg)]"
                     >
                       ×
                     </button>

@@ -46,7 +46,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <Topbar />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar projectTree={projectTree} />
-        <main className="flex-1 overflow-auto" style={{ background: 'var(--bg)' }}>
+        <main className="flex-1 overflow-auto bg-[var(--bg)]">
           {children}
         </main>
       </div>
