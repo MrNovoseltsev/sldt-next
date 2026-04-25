@@ -1,23 +1,19 @@
 'use client'
 
-import { useState, useTransition, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation'
 import type { ProjectRow } from '@/types/database'
-import type { SidebarProject, SidebarLocation, SidebarScheme } from '@/types/sidebar';
-import { deleteProjectAction, updateProjectAction } from '@/app/actions/projects';
+import type { SidebarProject, SidebarLocation, SidebarScheme } from '@/types/sidebar'
+import { useMockData } from '@/lib/mock-db/MockDataContext'
 import ProjectFormDialog from '@/components/projects/ProjectFormDialog'
 import { cn } from '@/lib/utils'
 
 type Tab = 'nav' | 'fav'
 
-interface SidebarProps {
-  projectTree: SidebarProject[];
-}
-
 // ── Toggle button ─────────────────────────────────────────────────────────────
 
-function ToggleBtn({ expanded, onToggle }: { expanded: boolean; onToggle: (e: React.MouseEvent) => void; }) {
+function ToggleBtn({ expanded, onToggle }: { expanded: boolean; onToggle: (e: React.MouseEvent) => void }) {
   return (
     <button
       onClick={onToggle}
@@ -25,18 +21,24 @@ function ToggleBtn({ expanded, onToggle }: { expanded: boolean; onToggle: (e: Re
     >
       {expanded ? '−' : '+'}
     </button>
-  );
+  )
 }
 
-const toggleSpace = <span className="w-[14px] shrink-0 inline-block" />;
+const toggleSpace = <span className="w-[14px] shrink-0 inline-block" />
 
 // ── Scheme node ───────────────────────────────────────────────────────────────
 
-function SchemeNode({ scheme, projectId, pathname }: {
-  scheme: SidebarScheme; projectId: string; pathname: string;
+function SchemeNode({
+  scheme,
+  projectId,
+  activeSchemeId,
+}: {
+  scheme: SidebarScheme
+  projectId: string
+  activeSchemeId: string | null
 }) {
-  const href = `/projects/${projectId}/schemes/${scheme.id}`;
-  const isActive = pathname === href;
+  const href = `/scheme?projectId=${projectId}&schemeId=${scheme.id}`
+  const isActive = activeSchemeId === scheme.id
   return (
     <div className="relative">
       <Link
@@ -48,27 +50,38 @@ function SchemeNode({ scheme, projectId, pathname }: {
       >
         <span className="absolute left-[-7px] top-1/2 w-[7px] h-px bg-[var(--border-light)] block pointer-events-none" />
         {toggleSpace}
-        <span className={cn(
-          'text-xs flex-1 overflow-hidden text-ellipsis whitespace-nowrap',
-          isActive ? 'text-[var(--accent)] font-medium' : 'text-foreground font-light',
-        )}>
+        <span
+          className={cn(
+            'text-xs flex-1 overflow-hidden text-ellipsis whitespace-nowrap',
+            isActive ? 'text-[var(--accent)] font-medium' : 'text-foreground font-light',
+          )}
+        >
           {scheme.device_name ?? 'Без названия'}
         </span>
       </Link>
     </div>
-  );
+  )
 }
 
 // ── Location node ─────────────────────────────────────────────────────────────
 
-function LocationNode({ location, projectId, locationKey, pathname, expanded, onToggle }: {
-  location: SidebarLocation; projectId: string; locationKey: string;
-  pathname: string; expanded: Record<string, boolean>; onToggle: (id: string) => void;
+function LocationNode({
+  location,
+  projectId,
+  locationKey,
+  activeSchemeId,
+  expanded,
+  onToggle,
+}: {
+  location: SidebarLocation
+  projectId: string
+  locationKey: string
+  activeSchemeId: string | null
+  expanded: Record<string, boolean>
+  onToggle: (id: string) => void
 }) {
-  const isExp = !!expanded[locationKey];
-  const isChildActive = location.schemes.some(
-    (s) => pathname === `/projects/${projectId}/schemes/${s.id}`
-  );
+  const isExp = !!expanded[locationKey]
+  const isChildActive = location.schemes.some((s) => s.id === activeSchemeId)
   return (
     <>
       <div
@@ -79,64 +92,87 @@ function LocationNode({ location, projectId, locationKey, pathname, expanded, on
         onClick={() => onToggle(locationKey)}
       >
         <span className="absolute left-[-7px] top-1/2 w-[7px] h-px bg-[var(--border-light)] block pointer-events-none" />
-        <ToggleBtn expanded={isExp} onToggle={(e) => { e.stopPropagation(); onToggle(locationKey); }} />
+        <ToggleBtn
+          expanded={isExp}
+          onToggle={(e) => {
+            e.stopPropagation()
+            onToggle(locationKey)
+          }}
+        />
         <span className="text-xs text-foreground font-light flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
           {location.name ?? 'Без расположения'}
         </span>
-        <span className="text-[11px] text-[var(--text-3)] shrink-0">
-          ({location.schemes.length})
-        </span>
+        <span className="text-[11px] text-[var(--text-3)] shrink-0">({location.schemes.length})</span>
       </div>
       {isExp && (
         <div className="ml-[15px] border-l border-[var(--border-light)]">
           {location.schemes.map((scheme) => (
-            <SchemeNode key={scheme.id} scheme={scheme} projectId={projectId} pathname={pathname} />
+            <SchemeNode
+              key={scheme.id}
+              scheme={scheme}
+              projectId={projectId}
+              activeSchemeId={activeSchemeId}
+            />
           ))}
         </div>
       )}
     </>
-  );
+  )
 }
 
 // ── Project node ──────────────────────────────────────────────────────────────
 
 interface ProjectNodeProps {
-  project: SidebarProject;
-  pathname: string;
-  expanded: Record<string, boolean>;
-  onToggle: (id: string) => void;
-  hoveredId: string | null;
-  setHoveredId: (id: string | null) => void;
-  menuOpenId: string | null;
-  setMenuOpenId: (id: string | null) => void;
-  renamingId: string | null;
-  renameValue: string;
-  setRenameValue: (v: string) => void;
-  onStartRename: (project: ProjectRow) => void;
-  onConfirmRename: (projectId: string) => void;
-  onCancelRename: () => void;
-  onEdit: (project: ProjectRow) => void;
-  onDelete: (projectId: string) => void;
-  menuRef: React.RefObject<HTMLDivElement | null>;
-  isFavorited: boolean;
-  onToggleFavorite: () => void;
+  project: SidebarProject
+  activeProjectId: string | null
+  activeSchemeId: string | null
+  expanded: Record<string, boolean>
+  onToggle: (id: string) => void
+  hoveredId: string | null
+  setHoveredId: (id: string | null) => void
+  menuOpenId: string | null
+  setMenuOpenId: (id: string | null) => void
+  renamingId: string | null
+  renameValue: string
+  setRenameValue: (v: string) => void
+  onStartRename: (project: ProjectRow) => void
+  onConfirmRename: (projectId: string) => void
+  onCancelRename: () => void
+  onEdit: (project: ProjectRow) => void
+  onDelete: (projectId: string) => void
+  menuRef: React.RefObject<HTMLDivElement | null>
+  isFavorited: boolean
+  onToggleFavorite: () => void
 }
 
 function ProjectNode({
-  project, pathname, expanded, onToggle,
-  hoveredId, setHoveredId, menuOpenId, setMenuOpenId,
-  renamingId, renameValue, setRenameValue,
-  onStartRename, onConfirmRename, onCancelRename,
-  onEdit, onDelete, menuRef,
-  isFavorited, onToggleFavorite,
+  project,
+  activeProjectId,
+  activeSchemeId,
+  expanded,
+  onToggle,
+  hoveredId,
+  setHoveredId,
+  menuOpenId,
+  setMenuOpenId,
+  renamingId,
+  renameValue,
+  setRenameValue,
+  onStartRename,
+  onConfirmRename,
+  onCancelRename,
+  onEdit,
+  onDelete,
+  menuRef,
+  isFavorited,
+  onToggleFavorite,
 }: ProjectNodeProps) {
-  const schemeCount = project.locations.reduce((acc, loc) => acc + loc.schemes.length, 0);
-  const hasChildren = schemeCount > 0;
-  const isExp = !!expanded[project.id];
-  const isActive = pathname?.startsWith(`/projects/${project.id}`);
-  const showActions = hoveredId === project.id || menuOpenId === project.id;
-
-  const isFlatMode = project.locations.length === 1 && project.locations[0].name === null;
+  const schemeCount = project.locations.reduce((acc, loc) => acc + loc.schemes.length, 0)
+  const hasChildren = schemeCount > 0
+  const isExp = !!expanded[project.id]
+  const isActive = activeProjectId === project.id
+  const showActions = hoveredId === project.id || menuOpenId === project.id
+  const isFlatMode = project.locations.length === 1 && project.locations[0].name === null
 
   return (
     <div
@@ -150,8 +186,11 @@ function ProjectNode({
             value={renameValue}
             onChange={(e) => setRenameValue(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') { e.preventDefault(); onConfirmRename(project.id); }
-              if (e.key === 'Escape') onCancelRename();
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                onConfirmRename(project.id)
+              }
+              if (e.key === 'Escape') onCancelRename()
             }}
             onBlur={onCancelRename}
             className="w-full h-[26px] px-2 text-xs border border-[var(--accent)] rounded-[3px] bg-[var(--bg)] text-foreground font-[inherit] outline-none box-border"
@@ -165,33 +204,43 @@ function ProjectNode({
             isActive && !isExp
               ? 'bg-accent'
               : showActions
-              ? 'bg-[var(--bg)]'
-              : 'bg-transparent hover:bg-[var(--bg)]',
+                ? 'bg-[var(--bg)]'
+                : 'bg-transparent hover:bg-[var(--bg)]',
             showActions ? 'pr-[28px]' : 'pr-2',
           )}
-          onClick={() => { if (hasChildren) onToggle(project.id); }}
+          onClick={() => {
+            if (hasChildren) onToggle(project.id)
+          }}
         >
-          {hasChildren
-            ? <ToggleBtn expanded={isExp} onToggle={(e) => { e.stopPropagation(); onToggle(project.id); }} />
-            : toggleSpace
-          }
-          <span className={cn(
-            'text-xs flex-1 overflow-hidden text-ellipsis whitespace-nowrap',
-            isActive ? 'text-[var(--accent)] font-medium' : 'text-foreground font-light',
-          )}>
+          {hasChildren ? (
+            <ToggleBtn
+              expanded={isExp}
+              onToggle={(e) => {
+                e.stopPropagation()
+                onToggle(project.id)
+              }}
+            />
+          ) : (
+            toggleSpace
+          )}
+          <span
+            className={cn(
+              'text-xs flex-1 overflow-hidden text-ellipsis whitespace-nowrap',
+              isActive ? 'text-[var(--accent)] font-medium' : 'text-foreground font-light',
+            )}
+          >
             {project.name}
           </span>
           {schemeCount > 0 && (
-            <span className="text-[11px] text-[var(--text-3)] shrink-0">
-              ({schemeCount})
-            </span>
+            <span className="text-[11px] text-[var(--text-3)] shrink-0">({schemeCount})</span>
           )}
 
           {showActions && (
             <button
               onClick={(e) => {
-                e.preventDefault(); e.stopPropagation();
-                setMenuOpenId(menuOpenId === project.id ? null : project.id);
+                e.preventDefault()
+                e.stopPropagation()
+                setMenuOpenId(menuOpenId === project.id ? null : project.id)
               }}
               className={cn(
                 'absolute right-1 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center border-none rounded-[3px] cursor-pointer text-muted-foreground p-0 transition-colors duration-100',
@@ -211,12 +260,14 @@ function ProjectNode({
               ref={menuRef}
               className="absolute right-0 top-full z-[200] bg-[var(--surface)] border border-border rounded-[5px] shadow-[0_4px_12px_rgba(0,0,0,.1)] min-w-[150px] overflow-hidden py-0.5"
             >
-              {([
-                { label: isFavorited ? 'Убрать из избранного' : 'Добавить в избранное', action: onToggleFavorite },
-                { label: 'Переименовать', action: () => onStartRename(project) },
-                { label: 'Изменить', action: () => onEdit(project) },
-                { label: 'Удалить', danger: true, action: () => onDelete(project.id) },
-              ] as { label: string; action: () => void; danger?: boolean }[]).map((item) => (
+              {(
+                [
+                  { label: isFavorited ? 'Убрать из избранного' : 'Добавить в избранное', action: onToggleFavorite },
+                  { label: 'Переименовать', action: () => onStartRename(project) },
+                  { label: 'Изменить', action: () => onEdit(project) },
+                  { label: 'Удалить', danger: true, action: () => onDelete(project.id) },
+                ] as { label: string; action: () => void; danger?: boolean }[]
+              ).map((item) => (
                 <button
                   key={item.label}
                   onClick={item.action}
@@ -237,126 +288,149 @@ function ProjectNode({
         <div className="ml-[15px] border-l border-[var(--border-light)]">
           {isFlatMode
             ? project.locations[0].schemes.map((scheme) => (
-              <SchemeNode key={scheme.id} scheme={scheme} projectId={project.id} pathname={pathname} />
-            ))
-            : project.locations.map((loc) => {
-              const locKey = `${project.id}:loc:${loc.name ?? ''}`;
-              return (
-                <LocationNode
-                  key={locKey}
-                  location={loc}
+                <SchemeNode
+                  key={scheme.id}
+                  scheme={scheme}
                   projectId={project.id}
-                  locationKey={locKey}
-                  pathname={pathname}
-                  expanded={expanded}
-                  onToggle={onToggle}
+                  activeSchemeId={activeSchemeId}
                 />
-              );
-            })
-          }
+              ))
+            : project.locations.map((loc) => {
+                const locKey = `${project.id}:loc:${loc.name ?? ''}`
+                return (
+                  <LocationNode
+                    key={locKey}
+                    location={loc}
+                    projectId={project.id}
+                    locationKey={locKey}
+                    activeSchemeId={activeSchemeId}
+                    expanded={expanded}
+                    onToggle={onToggle}
+                  />
+                )
+              })}
         </div>
       )}
     </div>
-  );
+  )
 }
 
 // ── Main Sidebar ──────────────────────────────────────────────────────────────
 
-export default function Sidebar({ projectTree }: SidebarProps) {
+export default function Sidebar() {
+  const { getProjects, getAllSchemesSummary, deleteProject, updateProject } = useMockData()
+  const projects = getProjects()
+  const schemesSummary = getAllSchemesSummary()
+
+  const projectTree: SidebarProject[] = useMemo(() => {
+    return projects.map((project) => {
+      const projectSchemes = schemesSummary.filter((s) => s.project_id === project.id)
+      const hasAnyLocation = projectSchemes.some((s) => s.installation_location)
+
+      let locations: SidebarProject['locations']
+      if (!hasAnyLocation) {
+        locations =
+          projectSchemes.length > 0
+            ? [{ name: null, schemes: projectSchemes.map((s) => ({ id: s.id, device_name: s.device_name })) }]
+            : []
+      } else {
+        const locationMap = new Map<string, { id: string; device_name: string | null }[]>()
+        for (const scheme of projectSchemes) {
+          const key = scheme.installation_location ?? ''
+          if (!locationMap.has(key)) locationMap.set(key, [])
+          locationMap.get(key)!.push({ id: scheme.id, device_name: scheme.device_name })
+        }
+        locations = Array.from(locationMap.entries()).map(([name, schemes]) => ({
+          name: name || null,
+          schemes,
+        }))
+      }
+      return { ...project, locations }
+    })
+  }, [projects, schemesSummary])
+
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const activeProjectId = searchParams.get('id') ?? searchParams.get('projectId')
+  const activeSchemeId = searchParams.get('schemeId')
+
   const [collapsed, setCollapsed] = useState(false)
   const [tab, setTab] = useState<Tab>('nav')
-  const pathname = usePathname()
-  const router = useRouter();
-  const [, startTransition] = useTransition();
+  const [favorites, setFavorites] = useState<Set<string>>(() => new Set())
 
-  const [favorites, setFavorites] = useState<Set<string>>(() => {
-    if (typeof window === 'undefined') return new Set();
-    try {
-      const stored = localStorage.getItem('sidebar-favorites');
-      return stored ? new Set(JSON.parse(stored) as string[]) : new Set();
-    } catch { return new Set(); }
-  });
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
+  const [editTarget, setEditTarget] = useState<ProjectRow | null>(null)
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
+
+  const menuRef = useRef<HTMLDivElement>(null)
 
   const toggleFavorite = (projectId: string) => {
     setFavorites((prev) => {
-      const next = new Set(prev);
-      if (next.has(projectId)) next.delete(projectId); else next.add(projectId);
-      try { localStorage.setItem('sidebar-favorites', JSON.stringify([...next])); } catch {}
-      return next;
-    });
-    setMenuOpenId(null);
-  };
-
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
-  const [renamingId, setRenamingId] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState('');
-  const [editTarget, setEditTarget] = useState<ProjectRow | null>(null);
-  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-
-  const menuRef = useRef<HTMLDivElement>(null);
+      const next = new Set(prev)
+      if (next.has(projectId)) next.delete(projectId)
+      else next.add(projectId)
+      return next
+    })
+    setMenuOpenId(null)
+  }
 
   const initialExpanded = useMemo(() => {
-    const state: Record<string, boolean> = {};
-    const schemeMatch = pathname?.match(/^\/projects\/([^/]+)\/schemes\/([^/]+)/);
-    if (schemeMatch) {
-      const [, projectId, schemeId] = schemeMatch;
-      state[projectId] = true;
-      for (const project of projectTree) {
-        if (project.id !== projectId) continue;
-        for (const loc of project.locations) {
-          if (loc.schemes.some((s) => s.id === schemeId)) {
-            state[`${projectId}:loc:${loc.name ?? ''}`] = true;
+    const state: Record<string, boolean> = {}
+    if (activeProjectId) {
+      state[activeProjectId] = true
+      if (activeSchemeId) {
+        for (const project of projectTree) {
+          if (project.id !== activeProjectId) continue
+          for (const loc of project.locations) {
+            if (loc.schemes.some((s) => s.id === activeSchemeId)) {
+              state[`${activeProjectId}:loc:${loc.name ?? ''}`] = true
+            }
           }
         }
       }
-    } else {
-      const projMatch = pathname?.match(/^\/projects\/([^/]+)/);
-      if (projMatch) state[projMatch[1]] = true;
     }
-    return state;
+    return state
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [])
 
-  const [expanded, setExpanded] = useState<Record<string, boolean>>(initialExpanded);
-  const toggleExpanded = (id: string) => setExpanded((e) => ({ ...e, [id]: !e[id] }));
+  const [expanded, setExpanded] = useState<Record<string, boolean>>(initialExpanded)
+  const toggleExpanded = (id: string) => setExpanded((e) => ({ ...e, [id]: !e[id] }))
 
   useEffect(() => {
-    if (!menuOpenId) return;
+    if (!menuOpenId) return
     const handleClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpenId(null);
+        setMenuOpenId(null)
       }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [menuOpenId]);
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [menuOpenId])
 
   const startRename = (project: ProjectRow) => {
-    setRenamingId(project.id);
-    setRenameValue(project.name);
-    setMenuOpenId(null);
-  };
+    setRenamingId(project.id)
+    setRenameValue(project.name)
+    setMenuOpenId(null)
+  }
 
   const confirmRename = (projectId: string) => {
-    const trimmed = renameValue.trim();
-    setRenamingId(null);
-    if (!trimmed) return;
-    startTransition(async () => {
-      await updateProjectAction(projectId, { name: trimmed });
-      router.refresh();
-    });
-  };
+    const trimmed = renameValue.trim()
+    setRenamingId(null)
+    if (!trimmed) return
+    updateProject(projectId, { name: trimmed })
+  }
 
   const handleDelete = (projectId: string) => {
-    const isActive = pathname?.startsWith(`/projects/${projectId}`);
-    setDeleteTargetId(null);
-    startTransition(async () => {
-      await deleteProjectAction(projectId);
-      if (isActive) router.push('/dashboard');
-      router.refresh();
-    });
+    const isActive = activeProjectId === projectId
+    setDeleteTargetId(null)
+    deleteProject(projectId)
+    if (isActive) router.push('/dashboard')
   }
+
+  const favProjects = projectTree.filter((p) => favorites.has(p.id))
 
   return (
     <>
@@ -365,16 +439,22 @@ export default function Sidebar({ projectTree }: SidebarProps) {
           mode="edit"
           project={editTarget}
           open={!!editTarget}
-          onOpenChange={(open) => { if (!open) setEditTarget(null); }}
-          onSuccess={() => { setEditTarget(null); router.refresh(); }}
+          onOpenChange={(open) => {
+            if (!open) setEditTarget(null)
+          }}
+          onSuccess={() => setEditTarget(null)}
         />
       )}
 
       {deleteTargetId && (
         <div
           className="fixed inset-0 bg-black/45 flex items-center justify-center z-[1000]"
-          onClick={(e) => { if (e.target === e.currentTarget) setDeleteTargetId(null); }}
-          onKeyDown={(e) => { if (e.key === 'Escape') setDeleteTargetId(null); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setDeleteTargetId(null)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setDeleteTargetId(null)
+          }}
         >
           <div className="bg-[var(--surface)] border border-border rounded-lg p-6 w-[320px] flex flex-col gap-4">
             <div className="text-sm font-medium text-foreground">Удалить объект?</div>
@@ -407,7 +487,6 @@ export default function Sidebar({ projectTree }: SidebarProps) {
           transition: 'width .22s cubic-bezier(.4,0,.2,1), min-width .22s cubic-bezier(.4,0,.2,1)',
         }}
       >
-        {/* Header */}
         <div className="flex items-center border-b border-border shrink-0 overflow-hidden">
           {!collapsed && (
             <div className="flex flex-1 px-2">
@@ -452,61 +531,20 @@ export default function Sidebar({ projectTree }: SidebarProps) {
         {!collapsed && (
           <>
             {tab === 'nav' && (
-              <>
-                <div className="flex-1 overflow-y-auto py-2">
-                  <div className="text-[10px] font-semibold tracking-[.08em] text-[var(--text-3)] uppercase px-3 pt-3 pb-1">
-                    Объекты
-                  </div>
-
-                  {projectTree.length === 0 ? (
-                    <div className="px-3 py-6 text-center text-xs text-[var(--text-3)]">
-                      Нет объектов
-                    </div>
-                  ) : (
-                    projectTree.map((project) => (
-                      <ProjectNode
-                        key={project.id}
-                        project={project}
-                        pathname={pathname ?? ''}
-                        expanded={expanded}
-                        onToggle={toggleExpanded}
-                        hoveredId={hoveredId}
-                        setHoveredId={setHoveredId}
-                        menuOpenId={menuOpenId}
-                        setMenuOpenId={setMenuOpenId}
-                        renamingId={renamingId}
-                        renameValue={renameValue}
-                        setRenameValue={setRenameValue}
-                        onStartRename={startRename}
-                        onConfirmRename={confirmRename}
-                        onCancelRename={() => setRenamingId(null)}
-                        onEdit={(p) => { setEditTarget(p); setMenuOpenId(null); }}
-                        onDelete={(id) => { setDeleteTargetId(id); setMenuOpenId(null); }}
-                        menuRef={menuRef}
-                        isFavorited={favorites.has(project.id)}
-                        onToggleFavorite={() => toggleFavorite(project.id)}
-                      />
-                    ))
-                  )}
-                </div>
-              </>
-            )}
-
-            {tab === 'fav' && (
               <div className="flex-1 overflow-y-auto py-2">
                 <div className="text-[10px] font-semibold tracking-[.08em] text-[var(--text-3)] uppercase px-3 pt-3 pb-1">
-                  Избранное
+                  Объекты
                 </div>
-                {projectTree.filter((p) => favorites.has(p.id)).length === 0 ? (
-                  <div className="px-3 py-6 text-center text-xs text-[var(--text-3)]">
-                    Нет избранного
-                  </div>
+
+                {projectTree.length === 0 ? (
+                  <div className="px-3 py-6 text-center text-xs text-[var(--text-3)]">Нет объектов</div>
                 ) : (
-                  projectTree.filter((p) => favorites.has(p.id)).map((project) => (
+                  projectTree.map((project) => (
                     <ProjectNode
                       key={project.id}
                       project={project}
-                      pathname={pathname ?? ''}
+                      activeProjectId={activeProjectId}
+                      activeSchemeId={activeSchemeId}
                       expanded={expanded}
                       onToggle={toggleExpanded}
                       hoveredId={hoveredId}
@@ -519,10 +557,59 @@ export default function Sidebar({ projectTree }: SidebarProps) {
                       onStartRename={startRename}
                       onConfirmRename={confirmRename}
                       onCancelRename={() => setRenamingId(null)}
-                      onEdit={(p) => { setEditTarget(p); setMenuOpenId(null); }}
-                      onDelete={(id) => { setDeleteTargetId(id); setMenuOpenId(null); }}
+                      onEdit={(p) => {
+                        setEditTarget(p)
+                        setMenuOpenId(null)
+                      }}
+                      onDelete={(id) => {
+                        setDeleteTargetId(id)
+                        setMenuOpenId(null)
+                      }}
                       menuRef={menuRef}
-                      isFavorited={true}
+                      isFavorited={favorites.has(project.id)}
+                      onToggleFavorite={() => toggleFavorite(project.id)}
+                    />
+                  ))
+                )}
+              </div>
+            )}
+
+            {tab === 'fav' && (
+              <div className="flex-1 overflow-y-auto py-2">
+                <div className="text-[10px] font-semibold tracking-[.08em] text-[var(--text-3)] uppercase px-3 pt-3 pb-1">
+                  Избранное
+                </div>
+                {favProjects.length === 0 ? (
+                  <div className="px-3 py-6 text-center text-xs text-[var(--text-3)]">Нет избранного</div>
+                ) : (
+                  favProjects.map((project) => (
+                    <ProjectNode
+                      key={project.id}
+                      project={project}
+                      activeProjectId={activeProjectId}
+                      activeSchemeId={activeSchemeId}
+                      expanded={expanded}
+                      onToggle={toggleExpanded}
+                      hoveredId={hoveredId}
+                      setHoveredId={setHoveredId}
+                      menuOpenId={menuOpenId}
+                      setMenuOpenId={setMenuOpenId}
+                      renamingId={renamingId}
+                      renameValue={renameValue}
+                      setRenameValue={setRenameValue}
+                      onStartRename={startRename}
+                      onConfirmRename={confirmRename}
+                      onCancelRename={() => setRenamingId(null)}
+                      onEdit={(p) => {
+                        setEditTarget(p)
+                        setMenuOpenId(null)
+                      }}
+                      onDelete={(id) => {
+                        setDeleteTargetId(id)
+                        setMenuOpenId(null)
+                      }}
+                      menuRef={menuRef}
+                      isFavorited
                       onToggleFavorite={() => toggleFavorite(project.id)}
                     />
                   ))

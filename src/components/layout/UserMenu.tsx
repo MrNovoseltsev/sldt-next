@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import { LogOut, Settings } from 'lucide-react'
-import { signOut } from '@/app/actions/auth'
+import { useMockAuth } from '@/lib/mock-auth/MockAuthContext'
 import { cn } from '@/lib/utils'
 import { AccountSettingsDialog } from './AccountSettingsDialog'
 
@@ -38,6 +39,13 @@ function MenuItem({
 
 export function UserMenu({ email, fullName, initials }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const { signOut } = useMockAuth()
+  const router = useRouter()
+
+  const handleSignOut = () => {
+    signOut()
+    router.push('/login')
+  }
 
   return (
     <>
@@ -67,7 +75,7 @@ export function UserMenu({ email, fullName, initials }: Props) {
 
           <DropdownMenuPrimitive.Separator className="h-px bg-border my-0.5" />
 
-          <MenuItem onSelect={() => signOut()}>
+          <MenuItem onSelect={handleSignOut}>
             <LogOut size={14} />
             Выйти
           </MenuItem>

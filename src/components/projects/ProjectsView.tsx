@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { ProjectRow } from '@/types/database'
+import { useMockData } from '@/lib/mock-db/MockDataContext'
 import ProjectFormDialog from './ProjectFormDialog'
-import { deleteProjectAction } from '@/app/actions/projects'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 
@@ -24,46 +24,39 @@ function formatDate(iso: string) {
 
 const IconDotsVertical = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-    <circle cx="8" cy="3" r="1.3"/>
-    <circle cx="8" cy="8" r="1.3"/>
-    <circle cx="8" cy="13" r="1.3"/>
+    <circle cx="8" cy="3" r="1.3" />
+    <circle cx="8" cy="8" r="1.3" />
+    <circle cx="8" cy="13" r="1.3" />
   </svg>
 )
-
 const IconEdit = () => (
   <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M11 2l3 3-9 9H2v-3L11 2z"/>
+    <path d="M11 2l3 3-9 9H2v-3L11 2z" />
   </svg>
 )
-
 const IconTrash = () => (
   <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 4h12M6 4V2h4v2M5 4v9a1 1 0 001 1h4a1 1 0 001-1V4"/>
+    <path d="M2 4h12M6 4V2h4v2M5 4v9a1 1 0 001 1h4a1 1 0 001-1V4" />
   </svg>
 )
-
 const IconPlus = () => (
   <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-    <path d="M8 2v12M2 8h12"/>
+    <path d="M8 2v12M2 8h12" />
   </svg>
 )
-
 const IconSearch = () => (
   <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M7 13A6 6 0 107 1a6 6 0 000 12zM13 13l2 2"/>
+    <path d="M7 13A6 6 0 107 1a6 6 0 000 12zM13 13l2 2" />
   </svg>
 )
 
-interface ProjectsViewProps {
-  projects: ProjectRow[]
-}
-
-export default function ProjectsView({ projects }: ProjectsViewProps) {
+export default function ProjectsView() {
   const router = useRouter()
+  const { getProjects, deleteProject } = useMockData()
+  const projects = getProjects()
+
   const [search, setSearch] = useState('')
   const [dialog, setDialog] = useState<DialogState>({ type: 'none' })
-  const [deleteError, setDeleteError] = useState<string | null>(null)
-  const [isDeleting, startDelete] = useTransition()
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState<{ id: string; top: number; left: number } | null>(null)
 
@@ -72,15 +65,7 @@ export default function ProjectsView({ projects }: ProjectsViewProps) {
     return p.name.toLowerCase().includes(q) || (p.customer ?? '').toLowerCase().includes(q)
   })
 
-  const closeDialog = () => {
-    setDialog({ type: 'none' })
-    setDeleteError(null)
-  }
-
-  const handleMutationSuccess = () => {
-    closeDialog()
-    router.refresh()
-  }
+  const closeDialog = () => setDialog({ type: 'none' })
 
   useEffect(() => {
     if (menuOpen === null) return
@@ -91,22 +76,12 @@ export default function ProjectsView({ projects }: ProjectsViewProps) {
 
   const handleDelete = () => {
     if (dialog.type !== 'delete') return
-    const id = dialog.project.id
-    setDeleteError(null)
-    startDelete(async () => {
-      const { error } = await deleteProjectAction(id)
-      if (error) {
-        setDeleteError(error)
-        return
-      }
-      closeDialog()
-      router.refresh()
-    })
+    deleteProject(dialog.project.id)
+    closeDialog()
   }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Section header */}
       <div className="bg-[var(--surface)] border-b border-border px-5 h-[52px] flex items-center gap-3 shrink-0">
         <div className="flex-1">
           <div className="text-[15px] font-semibold text-foreground">Объекты</div>
@@ -125,7 +100,6 @@ export default function ProjectsView({ projects }: ProjectsViewProps) {
         </button>
       </div>
 
-      {/* Toolbar */}
       <div className="bg-[var(--surface)] border-b border-border px-5 h-[40px] flex items-center gap-2 shrink-0">
         <div className="flex items-center gap-1.5 border border-border rounded-[4px] px-[9px] py-1 bg-[var(--bg)] max-w-[240px] flex-1 focus-within:border-[var(--accent)] transition-colors">
           <IconSearch />
@@ -138,7 +112,6 @@ export default function ProjectsView({ projects }: ProjectsViewProps) {
         </div>
       </div>
 
-      {/* Table */}
       <div className="flex-1 overflow-y-auto">
         {projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-[var(--text-3)]">
@@ -171,10 +144,7 @@ export default function ProjectsView({ projects }: ProjectsViewProps) {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={3}
-                    className="text-center text-[var(--text-3)] py-8 text-[13px]"
-                  >
+                  <td colSpan={3} className="text-center text-[var(--text-3)] py-8 text-[13px]">
                     Ничего не найдено
                   </td>
                 </tr>
@@ -187,7 +157,7 @@ export default function ProjectsView({ projects }: ProjectsViewProps) {
                   return (
                     <tr
                       key={project.id}
-                      onClick={() => router.push(`/projects/${project.id}`)}
+                      onClick={() => router.push(`/project?id=${project.id}`)}
                       onMouseEnter={() => setHoveredRow(project.id)}
                       onMouseLeave={() => setHoveredRow(null)}
                       className={cn(
@@ -220,7 +190,6 @@ export default function ProjectsView({ projects }: ProjectsViewProps) {
                             <IconDotsVertical />
                           </button>
                         </div>
-
                         {project.name}
                       </td>
                       <td
@@ -243,86 +212,79 @@ export default function ProjectsView({ projects }: ProjectsViewProps) {
         )}
       </div>
 
-      {/* Context menu — fixed to viewport */}
-      {menuOpen && (() => {
-        const project = projects.find((p) => p.id === menuOpen.id)
-        if (!project) return null
-        return (
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="fixed bg-[var(--surface)] border border-border rounded-[6px] shadow-[0_4px_12px_rgba(0,0,0,.12)] z-[9999] min-w-[148px] py-[3px]"
-            style={{ top: menuOpen.top, left: menuOpen.left }}
-          >
-            <button
-              onClick={() => {
-                setMenuOpen(null)
-                setDialog({ type: 'edit', project })
-              }}
-              className="w-full flex items-center gap-2 px-3 py-[7px] text-[12.5px] text-foreground bg-transparent border-none cursor-pointer font-[inherit] text-left transition-colors hover:bg-[var(--bg)]"
+      {menuOpen &&
+        (() => {
+          const project = projects.find((p) => p.id === menuOpen.id)
+          if (!project) return null
+          return (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="fixed bg-[var(--surface)] border border-border rounded-[6px] shadow-[0_4px_12px_rgba(0,0,0,.12)] z-[9999] min-w-[148px] py-[3px]"
+              style={{ top: menuOpen.top, left: menuOpen.left }}
             >
-              <IconEdit />
-              Редактировать
-            </button>
-            <button
-              onClick={() => {
-                setMenuOpen(null)
-                setDialog({ type: 'delete', project })
-              }}
-              className="w-full flex items-center gap-2 px-3 py-[7px] text-[12.5px] text-destructive bg-transparent border-none cursor-pointer font-[inherit] text-left transition-colors hover:bg-[var(--err-bg)]"
-            >
-              <IconTrash />
-              Удалить
-            </button>
-          </div>
-        )
-      })()}
+              <button
+                onClick={() => {
+                  setMenuOpen(null)
+                  setDialog({ type: 'edit', project })
+                }}
+                className="w-full flex items-center gap-2 px-3 py-[7px] text-[12.5px] text-foreground bg-transparent border-none cursor-pointer font-[inherit] text-left transition-colors hover:bg-[var(--bg)]"
+              >
+                <IconEdit />
+                Редактировать
+              </button>
+              <button
+                onClick={() => {
+                  setMenuOpen(null)
+                  setDialog({ type: 'delete', project })
+                }}
+                className="w-full flex items-center gap-2 px-3 py-[7px] text-[12.5px] text-destructive bg-transparent border-none cursor-pointer font-[inherit] text-left transition-colors hover:bg-[var(--err-bg)]"
+              >
+                <IconTrash />
+                Удалить
+              </button>
+            </div>
+          )
+        })()}
 
-      {/* Create / Edit dialog */}
       {(dialog.type === 'create' || dialog.type === 'edit') && (
         <ProjectFormDialog
           mode={dialog.type}
           project={dialog.type === 'edit' ? dialog.project : undefined}
           open={true}
-          onOpenChange={(open) => { if (!open) closeDialog() }}
-          onSuccess={handleMutationSuccess}
+          onOpenChange={(open) => {
+            if (!open) closeDialog()
+          }}
+          onSuccess={closeDialog}
         />
       )}
 
-      {/* Delete confirmation dialog */}
-      <Dialog open={dialog.type === 'delete'} onOpenChange={(open) => { if (!open) closeDialog() }}>
+      <Dialog
+        open={dialog.type === 'delete'}
+        onOpenChange={(open) => {
+          if (!open) closeDialog()
+        }}
+      >
         <DialogContent className="max-w-[380px]">
           <DialogHeader>
             <DialogTitle className="text-sm font-semibold">Удалить объект</DialogTitle>
           </DialogHeader>
           <div className="text-[13px] text-muted-foreground py-1 pb-4 leading-[1.5]">
             Удалить объект{' '}
-            <strong className="text-foreground">
-              «{dialog.type === 'delete' ? dialog.project.name : ''}»
-            </strong>
-            ? Это действие необратимо — все схемы внутри объекта будут удалены.
+            <strong className="text-foreground">«{dialog.type === 'delete' ? dialog.project.name : ''}»</strong>?
+            Это действие необратимо — все схемы внутри объекта будут удалены.
           </div>
-          {deleteError && (
-            <div className="text-xs text-destructive bg-[var(--err-bg)] px-[10px] py-[7px] rounded-[5px] mb-3">
-              {deleteError}
-            </div>
-          )}
           <DialogFooter className="gap-2">
             <button
               onClick={closeDialog}
-              disabled={isDeleting}
               className="border border-border rounded-[5px] px-[14px] py-[6px] text-xs text-muted-foreground bg-transparent cursor-pointer font-[inherit]"
             >
               Отмена
             </button>
             <button
               onClick={handleDelete}
-              disabled={isDeleting}
-              className={cn(
-                'border-none rounded-[5px] px-[16px] py-[6px] text-xs text-white font-medium font-[inherit] transition-colors',
-                isDeleting ? 'bg-[var(--text-3)] cursor-not-allowed' : 'bg-destructive cursor-pointer',
-              )}
+              className="border-none rounded-[5px] px-[16px] py-[6px] text-xs text-white font-medium font-[inherit] transition-colors bg-destructive cursor-pointer"
             >
-              {isDeleting ? 'Удаление…' : 'Удалить'}
+              Удалить
             </button>
           </DialogFooter>
         </DialogContent>

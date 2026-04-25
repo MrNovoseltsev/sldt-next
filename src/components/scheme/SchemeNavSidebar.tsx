@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useTransition, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import type { SchemeRow } from '@/types/database'
-import { createSchemeAction, deleteSchemeAction, updateSchemeAction } from '@/app/actions/schemes'
+import { useMockData } from '@/lib/mock-db/MockDataContext'
 import CreateSchemeModal from './CreateSchemeModal'
 import { cn } from '@/lib/utils'
 
@@ -19,11 +19,13 @@ export default function SchemeNavSidebar({
   projectName,
   schemes,
 }: SchemeNavSidebarProps) {
-  const pathname = usePathname()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const activeSchemeId = searchParams.get('schemeId')
+  const { createScheme, updateScheme, deleteScheme } = useMockData()
+
   const [collapsed, setCollapsed] = useState(false)
   const [showModal, setShowModal] = useState(false)
-  const [isPending, startTransition] = useTransition()
 
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
@@ -45,13 +47,10 @@ export default function SchemeNavSidebar({
   }, [menuOpenId])
 
   const handleCreate = (name: string) => {
-    startTransition(async () => {
-      const { data, error } = await createSchemeAction(projectId, name)
-      if (error || !data) return
-      setShowModal(false)
-      router.push(`/projects/${projectId}/schemes/${data.id}`)
-      router.refresh()
-    })
+    const { data, error } = createScheme({ project_id: projectId, device_name: name || null })
+    if (error || !data) return
+    setShowModal(false)
+    router.push(`/scheme?projectId=${projectId}&schemeId=${data.id}`)
   }
 
   const startRename = (scheme: SchemeRow) => {
@@ -64,21 +63,14 @@ export default function SchemeNavSidebar({
     const trimmed = renameValue.trim()
     setRenamingId(null)
     if (!trimmed) return
-    startTransition(async () => {
-      await updateSchemeAction(schemeId, projectId, { device_name: trimmed })
-      router.refresh()
-    })
+    updateScheme(schemeId, { device_name: trimmed })
   }
 
   const handleDelete = (schemeId: string) => {
-    const href = `/projects/${projectId}/schemes/${schemeId}`
-    const isActive = pathname === href
+    const isActive = activeSchemeId === schemeId
     setDeleteTargetId(null)
-    startTransition(async () => {
-      await deleteSchemeAction(schemeId, projectId)
-      if (isActive) router.push(`/projects/${projectId}`)
-      router.refresh()
-    })
+    deleteScheme(schemeId)
+    if (isActive) router.push(`/project?id=${projectId}`)
   }
 
   return (
@@ -87,23 +79,22 @@ export default function SchemeNavSidebar({
         <CreateSchemeModal
           onConfirm={handleCreate}
           onClose={() => setShowModal(false)}
-          isPending={isPending}
         />
       )}
 
       {deleteTargetId && (
         <div
           className="fixed inset-0 bg-black/45 flex items-center justify-center z-[1000]"
-          onClick={(e) => { if (e.target === e.currentTarget) setDeleteTargetId(null) }}
-          onKeyDown={(e) => { if (e.key === 'Escape') setDeleteTargetId(null) }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setDeleteTargetId(null)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setDeleteTargetId(null)
+          }}
         >
           <div className="bg-[var(--surface)] border border-border rounded-lg p-6 w-[320px] flex flex-col gap-4">
-            <div className="text-sm font-medium text-foreground">
-              Удалить схему?
-            </div>
-            <div className="text-[13px] text-muted-foreground">
-              Это действие нельзя отменить.
-            </div>
+            <div className="text-sm font-medium text-foreground">Удалить схему?</div>
+            <div className="text-[13px] text-muted-foreground">Это действие нельзя отменить.</div>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setDeleteTargetId(null)}
@@ -113,11 +104,7 @@ export default function SchemeNavSidebar({
               </button>
               <button
                 onClick={() => handleDelete(deleteTargetId)}
-                disabled={isPending}
-                className={cn(
-                  'px-[14px] py-[6px] text-[12.5px] border-none rounded-[5px] text-white font-medium font-[inherit]',
-                  isPending ? 'bg-[var(--text-3)] cursor-not-allowed' : 'bg-destructive cursor-pointer',
-                )}
+                className="px-[14px] py-[6px] text-[12.5px] border-none rounded-[5px] text-white font-medium font-[inherit] bg-destructive cursor-pointer"
               >
                 Удалить
               </button>
@@ -134,7 +121,6 @@ export default function SchemeNavSidebar({
           transition: 'width .22s cubic-bezier(.4,0,.2,1), min-width .22s cubic-bezier(.4,0,.2,1)',
         }}
       >
-        {/* Header */}
         <div className="flex items-center border-b border-border shrink-0 h-[38px] overflow-hidden">
           {!collapsed && (
             <Link
@@ -172,13 +158,7 @@ export default function SchemeNavSidebar({
                   transition: 'transform .22s',
                 }}
               >
-                <path
-                  d="M2 1l5 5-5 5"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+                <path d="M2 1l5 5-5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </span>
           </button>
@@ -186,25 +166,21 @@ export default function SchemeNavSidebar({
 
         {!collapsed && (
           <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Project name */}
             <div className="px-3 pt-[10px] pb-[6px] text-xs font-medium text-foreground border-b border-[var(--border-light)] shrink-0 overflow-hidden text-ellipsis whitespace-nowrap">
               {projectName}
             </div>
 
-            {/* Schemes list */}
             <div className="flex-1 overflow-y-auto py-2">
               <div className="text-[10px] font-semibold tracking-[.08em] text-[var(--text-3)] uppercase px-3 py-1">
                 Схемы
               </div>
 
               {schemes.length === 0 ? (
-                <div className="px-3 py-4 text-xs text-[var(--text-3)] text-center">
-                  Нет схем
-                </div>
+                <div className="px-3 py-4 text-xs text-[var(--text-3)] text-center">Нет схем</div>
               ) : (
                 schemes.map((scheme) => {
-                  const href = `/projects/${projectId}/schemes/${scheme.id}`
-                  const isActive = pathname === href
+                  const href = `/scheme?projectId=${projectId}&schemeId=${scheme.id}`
+                  const isActive = activeSchemeId === scheme.id
                   const showActions = hoveredId === scheme.id || menuOpenId === scheme.id
 
                   if (renamingId === scheme.id) {
@@ -215,7 +191,10 @@ export default function SchemeNavSidebar({
                           value={renameValue}
                           onChange={(e) => setRenameValue(e.target.value)}
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter') { e.preventDefault(); confirmRename(scheme.id) }
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              confirmRename(scheme.id)
+                            }
                             if (e.key === 'Escape') setRenamingId(null)
                           }}
                           onBlur={() => setRenamingId(null)}
@@ -242,10 +221,12 @@ export default function SchemeNavSidebar({
                         <span className={cn('text-[10px] shrink-0', isActive ? 'text-[var(--accent)]' : 'text-[var(--text-3)]')}>
                           ⊞
                         </span>
-                        <span className={cn(
-                          'text-xs flex-1 overflow-hidden text-ellipsis whitespace-nowrap',
-                          isActive ? 'text-[var(--accent)] font-medium' : 'text-foreground font-light',
-                        )}>
+                        <span
+                          className={cn(
+                            'text-xs flex-1 overflow-hidden text-ellipsis whitespace-nowrap',
+                            isActive ? 'text-[var(--accent)] font-medium' : 'text-foreground font-light',
+                          )}
+                        >
                           {scheme.device_name ?? 'Без названия'}
                         </span>
                       </Link>
@@ -278,8 +259,21 @@ export default function SchemeNavSidebar({
                           {(
                             [
                               { label: 'Переименовать', action: () => startRename(scheme) },
-                              { label: 'Изменить', action: () => { router.push(href); setMenuOpenId(null) } },
-                              { label: 'Удалить', danger: true, action: () => { setDeleteTargetId(scheme.id); setMenuOpenId(null) } },
+                              {
+                                label: 'Изменить',
+                                action: () => {
+                                  router.push(href)
+                                  setMenuOpenId(null)
+                                },
+                              },
+                              {
+                                label: 'Удалить',
+                                danger: true,
+                                action: () => {
+                                  setDeleteTargetId(scheme.id)
+                                  setMenuOpenId(null)
+                                },
+                              },
                             ] as const
                           ).map((item) => (
                             <button
@@ -301,30 +295,15 @@ export default function SchemeNavSidebar({
               )}
             </div>
 
-            {/* Create scheme button */}
             <div className="p-2 border-t border-[var(--border-light)] shrink-0">
               <button
                 onClick={() => setShowModal(true)}
-                disabled={isPending}
-                className={cn(
-                  'w-full flex items-center gap-1.5 px-2 py-[5px] text-xs border border-dashed border-border rounded-[4px] bg-transparent font-[inherit] transition-colors duration-150',
-                  isPending
-                    ? 'text-[var(--text-3)] cursor-not-allowed'
-                    : 'text-muted-foreground cursor-pointer hover:text-[var(--accent)] hover:border-[var(--accent)]',
-                )}
+                className="w-full flex items-center gap-1.5 px-2 py-[5px] text-xs border border-dashed border-border rounded-[4px] bg-transparent font-[inherit] transition-colors duration-150 text-muted-foreground cursor-pointer hover:text-[var(--accent)] hover:border-[var(--accent)]"
               >
-                <svg
-                  width="11"
-                  height="11"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                >
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
                   <path d="M8 2v12M2 8h12" />
                 </svg>
-                {isPending ? 'Создание…' : 'Создать схему'}
+                Создать схему
               </button>
             </div>
           </div>

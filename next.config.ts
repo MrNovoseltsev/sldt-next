@@ -1,7 +1,14 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
+
+const isProd = process.env.NODE_ENV === 'production'
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  output: 'export',
+  trailingSlash: true,
+  images: { unoptimized: true },
+  basePath: isProd && basePath ? basePath : undefined,
+  assetPrefix: isProd && basePath ? basePath : undefined,
+}
 
-export default nextConfig;
+export default nextConfig

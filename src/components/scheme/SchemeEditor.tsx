@@ -1,15 +1,17 @@
 'use client'
 
-import { useState, useEffect, useTransition, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import type { SchemeRow, SchemeLineRow } from '@/types/database'
+import type { SchemeRow, SchemeLineRow, ProjectRow } from '@/types/database'
 import { calcSchemeTotals, calcLineCurrents } from '@/lib/calculations/electrical'
 import type { PhasesCount } from '@/types/enums'
-import { saveSchemeHeaderAction, saveAllLinesAction } from '@/app/actions/scheme-lines'
-import { deleteSchemeAction } from '@/app/actions/schemes';
+import { useMockData } from '@/lib/mock-db/MockDataContext'
 import SchemeHeaderForm from './SchemeHeaderForm'
 import SchemeLinesTable from './SchemeLinesTable'
 import { cn } from '@/lib/utils'
+
+const PdfDownloadButton = dynamic(() => import('./PdfDownloadButton'), { ssr: false })
 
 function newLine(schemeId: string, order: number): SchemeLineRow {
   return {
@@ -49,19 +51,19 @@ function coerceNum(v: string): number | null {
 interface SchemeEditorProps {
   scheme: SchemeRow
   lines: SchemeLineRow[]
-  projectId: string
-  projectName: string
+  project: ProjectRow
 }
 
-export default function SchemeEditor({ scheme, lines: initialLines, projectId, projectName }: SchemeEditorProps) {
+export default function SchemeEditor({ scheme, lines: initialLines, project }: SchemeEditorProps) {
   const router = useRouter()
+  const { saveSchemeHeader, saveAllLines, deleteScheme } = useMockData()
+
   const [localScheme, setLocalScheme] = useState<SchemeRow>(scheme)
   const [localLines, setLocalLines] = useState<SchemeLineRow[]>(initialLines)
   const [dirty, setDirty] = useState(false)
   const [savedMsg, setSavedMsg] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [isPending, startTransition] = useTransition()
 
   const phases = (localScheme.phases_count === 1 ? 1 : 3) as PhasesCount
   const demandCoef = localScheme.demand_coefficient ?? 1
@@ -106,7 +108,6 @@ export default function SchemeEditor({ scheme, lines: initialLines, projectId, p
           const parsed = numFields.includes(field) ? coerceNum(value) : value
           const updated = { ...line, [field]: parsed }
 
-          // Auto-recalculate phase currents when power or cos_phi changes
           if (field === 'power_kw' || field === 'cos_phi') {
             const currents = calcLineCurrents(updated, phases)
             if (currents) {
@@ -138,56 +139,50 @@ export default function SchemeEditor({ scheme, lines: initialLines, projectId, p
 
   const handleSave = useCallback(() => {
     setSaveError(null)
-    startTransition(async () => {
-      const schemeData = {
-        device_name: localScheme.device_name,
-        shell_brand: localScheme.shell_brand,
-        shell_code: localScheme.shell_code,
-        installation_method: localScheme.installation_method,
-        protection_degree: localScheme.protection_degree,
-        installation_location: localScheme.installation_location,
-        phases_count: localScheme.phases_count,
-        network_type: localScheme.network_type,
-        power_supply_from: localScheme.power_supply_from,
-        modules_count: localScheme.modules_count,
-        input_device_type: localScheme.input_device_type,
-        nominal_current: localScheme.nominal_current,
-        trip_setting: localScheme.trip_setting,
-        switching_capacity: localScheme.switching_capacity,
-        protection_characteristic: localScheme.protection_characteristic,
-        poles_count: localScheme.poles_count,
-        differential_current: localScheme.differential_current,
-        designation: localScheme.designation,
-        demand_coefficient: demandCoef,
-        installed_power_kva: totals.installedPowerKva,
-        installed_power_current: totals.installedCurrent,
-        calculated_power_kva: totals.calculatedPowerKva,
-        calculated_current: totals.calculatedCurrent,
-        current_phase_a: totals.phaseA,
-        current_phase_b: totals.phaseB,
-        current_phase_c: totals.phaseC,
-      }
+    const schemeData = {
+      device_name: localScheme.device_name,
+      shell_brand: localScheme.shell_brand,
+      shell_code: localScheme.shell_code,
+      installation_method: localScheme.installation_method,
+      protection_degree: localScheme.protection_degree,
+      installation_location: localScheme.installation_location,
+      phases_count: localScheme.phases_count,
+      network_type: localScheme.network_type,
+      power_supply_from: localScheme.power_supply_from,
+      modules_count: localScheme.modules_count,
+      input_device_type: localScheme.input_device_type,
+      nominal_current: localScheme.nominal_current,
+      trip_setting: localScheme.trip_setting,
+      switching_capacity: localScheme.switching_capacity,
+      protection_characteristic: localScheme.protection_characteristic,
+      poles_count: localScheme.poles_count,
+      differential_current: localScheme.differential_current,
+      designation: localScheme.designation,
+      demand_coefficient: demandCoef,
+      installed_power_kva: totals.installedPowerKva,
+      installed_power_current: totals.installedCurrent,
+      calculated_power_kva: totals.calculatedPowerKva,
+      calculated_current: totals.calculatedCurrent,
+      current_phase_a: totals.phaseA,
+      current_phase_b: totals.phaseB,
+      current_phase_c: totals.phaseC,
+    }
 
-      const linesPayload = localLines.map((l, idx) => ({ ...l, line_order: idx + 1 }))
+    const linesPayload = localLines.map((l, idx) => ({ ...l, line_order: idx + 1 }))
 
-      const [headerResult, linesResult] = await Promise.all([
-        saveSchemeHeaderAction(scheme.id, projectId, schemeData),
-        saveAllLinesAction(scheme.id, projectId, linesPayload),
-      ])
+    const headerResult = saveSchemeHeader(scheme.id, schemeData)
+    const linesResult = saveAllLines(scheme.id, linesPayload)
 
-      if (headerResult.error || linesResult.error) {
-        setSaveError(headerResult.error ?? linesResult.error)
-        return
-      }
+    if (headerResult.error || linesResult.error) {
+      setSaveError(headerResult.error ?? linesResult.error)
+      return
+    }
 
-      setDirty(false)
-      setSavedMsg(true)
-      setTimeout(() => setSavedMsg(false), 2500)
-      router.refresh()
-    })
-  }, [localScheme, localLines, demandCoef, totals, scheme.id, projectId, router])
+    setDirty(false)
+    setSavedMsg(true)
+    setTimeout(() => setSavedMsg(false), 2500)
+  }, [localScheme, localLines, demandCoef, totals, scheme.id, saveSchemeHeader, saveAllLines])
 
-  // Ctrl+S
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
@@ -199,18 +194,11 @@ export default function SchemeEditor({ scheme, lines: initialLines, projectId, p
     return () => window.removeEventListener('keydown', handler)
   }, [handleSave])
 
-  const handleDelete = useCallback(() => {
-    setShowDeleteConfirm(true);
-  }, []);
-
   const handleConfirmDelete = useCallback(() => {
-    setShowDeleteConfirm(false);
-    startTransition(async () => {
-      await deleteSchemeAction(scheme.id, projectId);
-      router.push(`/projects/${projectId}`);
-      router.refresh();
-    });
-  }, [scheme.id, projectId, router])
+    setShowDeleteConfirm(false)
+    deleteScheme(scheme.id)
+    router.push(`/project?id=${project.id}`)
+  }, [scheme.id, project.id, router, deleteScheme])
 
   const schemeName = localScheme.device_name || 'Без названия'
 
@@ -219,12 +207,12 @@ export default function SchemeEditor({ scheme, lines: initialLines, projectId, p
       {showDeleteConfirm && (
         <div
           className="fixed inset-0 bg-black/45 flex items-center justify-center z-[1000]"
-          onClick={(e) => { if (e.target === e.currentTarget) setShowDeleteConfirm(false); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowDeleteConfirm(false)
+          }}
         >
           <div className="bg-[var(--surface)] border border-border rounded-lg p-6 w-[360px] flex flex-col gap-3">
-            <div className="text-sm font-medium text-foreground">
-              Удалить схему?
-            </div>
+            <div className="text-sm font-medium text-foreground">Удалить схему?</div>
             <div className="text-[13px] text-muted-foreground leading-[1.5]">
               «{schemeName}» будет удалена без возможности восстановления.
             </div>
@@ -237,31 +225,25 @@ export default function SchemeEditor({ scheme, lines: initialLines, projectId, p
               </button>
               <button
                 onClick={handleConfirmDelete}
-                disabled={isPending}
-                className={cn(
-                  'px-[14px] py-[6px] text-[12.5px] border-none rounded-[5px] text-white font-medium font-[inherit]',
-                  isPending ? 'bg-[var(--text-3)] cursor-not-allowed' : 'bg-destructive cursor-pointer',
-                )}
+                className="px-[14px] py-[6px] text-[12.5px] border-none rounded-[5px] text-white font-medium font-[inherit] bg-destructive cursor-pointer"
               >
-                {isPending ? 'Удаление…' : 'Удалить'}
+                Удалить
               </button>
             </div>
           </div>
         </div>
       )}
       <div className="flex flex-col h-full overflow-hidden">
-        {/* Form header */}
         <div className="bg-[var(--surface)] border-b border-border px-5 h-[46px] flex items-center gap-[10px] shrink-0">
           <div className="flex-1 overflow-hidden">
             <div className="text-sm font-medium text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
               {schemeName}
             </div>
             <div className="text-[11px] text-[var(--text-3)] mt-px">
-              ГОСТ 21.613-2014 · {projectName}
+              ГОСТ 21.613-2014 · {project.name}
             </div>
           </div>
 
-          {/* Save indicator */}
           {dirty && !savedMsg && (
             <span className="text-[11px] text-[var(--text-3)] flex items-center gap-1 whitespace-nowrap">
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] shrink-0" />
@@ -269,58 +251,38 @@ export default function SchemeEditor({ scheme, lines: initialLines, projectId, p
             </span>
           )}
           {savedMsg && (
-            <span className="text-[11px] text-[var(--status-ok-text)] whitespace-nowrap">
-              ✓ Сохранено
-            </span>
+            <span className="text-[11px] text-[var(--status-ok-text)] whitespace-nowrap">✓ Сохранено</span>
           )}
           {saveError && (
-            <span className="text-[11px] text-destructive whitespace-nowrap">
-              Ошибка: {saveError}
-            </span>
+            <span className="text-[11px] text-destructive whitespace-nowrap">Ошибка: {saveError}</span>
           )}
 
           <div className="flex gap-1.5 shrink-0">
-            <a
-              href={`/api/pdf/${scheme.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-[5px] border border-border text-muted-foreground rounded-[5px] px-[10px] py-[5px] text-xs bg-transparent no-underline whitespace-nowrap transition-colors duration-150 hover:border-[var(--text-2)] hover:text-foreground"
-            >
-              PDF
-            </a>
+            <PdfDownloadButton scheme={localScheme} lines={localLines} project={project} />
             <button
               onClick={handleSave}
-              disabled={isPending}
               className={cn(
                 'flex items-center gap-1.5 text-white border-none rounded-[5px] px-[13px] py-[6px] text-[12.5px] font-medium font-[inherit] whitespace-nowrap transition-colors duration-150',
-                isPending
-                  ? 'bg-[var(--text-3)] cursor-not-allowed'
-                  : 'bg-[var(--accent)] cursor-pointer hover:enabled:bg-[var(--accent-hover)]',
+                'bg-[var(--accent)] cursor-pointer hover:enabled:bg-[var(--accent-hover)]',
               )}
             >
-              {isPending ? 'Сохранение…' : 'Сохранить'}
+              Сохранить
             </button>
             <button
-              onClick={handleDelete}
-              disabled={isPending}
-              className={cn(
-                'flex items-center border border-border text-muted-foreground rounded-[5px] px-[10px] py-[5px] text-xs bg-transparent font-[inherit] whitespace-nowrap transition-colors duration-150',
-                isPending ? 'cursor-not-allowed' : 'cursor-pointer hover:border-destructive hover:text-destructive',
-              )}
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center border border-border text-muted-foreground rounded-[5px] px-[10px] py-[5px] text-xs bg-transparent font-[inherit] whitespace-nowrap transition-colors duration-150 cursor-pointer hover:border-destructive hover:text-destructive"
             >
               Удалить
             </button>
           </div>
         </div>
 
-        {/* Tab bar */}
         <div className="bg-[var(--surface)] border-b border-border px-5 flex shrink-0">
           <button className="text-[12.5px] text-[var(--accent)] px-[14px] py-[10px] cursor-default font-medium bg-transparent border-none border-b-2 border-b-[var(--accent)] font-[inherit] whitespace-nowrap">
             Форма ГОСТ
           </button>
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto">
           <SchemeHeaderForm scheme={localScheme} totals={totals} onChange={handleSchemeChange} />
           <SchemeLinesTable

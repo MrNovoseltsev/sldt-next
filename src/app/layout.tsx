@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google'
 import './globals.css'
+import Providers from './providers'
 
 const ibmPlexSans = IBM_Plex_Sans({
   variable: '--font-sans',
@@ -22,7 +23,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru" className={`${ibmPlexSans.variable} ${ibmPlexMono.variable} h-full`}>
-      <body className="h-full font-sans">{children}</body>
+      <body className="h-full font-sans">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   )
 }

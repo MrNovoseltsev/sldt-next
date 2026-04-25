@@ -1,6 +1,5 @@
 'use client'
 
-import { useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -12,8 +11,9 @@ import {
 } from '@/components/ui/dialog'
 import { createProjectSchema, updateProjectSchema } from '@/lib/validations/project'
 import type { CreateProjectInput, UpdateProjectInput } from '@/lib/validations/project'
-import { createProjectAction, updateProjectAction } from '@/app/actions/projects'
 import type { ProjectRow } from '@/types/database'
+import { useMockData } from '@/lib/mock-db/MockDataContext'
+import { MOCK_USER_ID } from '@/lib/mock-db/types'
 import { cn } from '@/lib/utils'
 
 interface ProjectFormDialogProps {
@@ -31,7 +31,7 @@ export default function ProjectFormDialog({
   onOpenChange,
   onSuccess,
 }: ProjectFormDialogProps) {
-  const [isPending, startTransition] = useTransition()
+  const { createProject, updateProject } = useMockData()
 
   const schema = mode === 'create' ? createProjectSchema : updateProjectSchema
   const {
@@ -39,7 +39,7 @@ export default function ProjectFormDialog({
     handleSubmit,
     reset,
     setError,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<CreateProjectInput | UpdateProjectInput>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -49,23 +49,28 @@ export default function ProjectFormDialog({
   })
 
   const onSubmit = (data: CreateProjectInput | UpdateProjectInput) => {
-    startTransition(async () => {
-      const result =
-        mode === 'create'
-          ? await createProjectAction(data as CreateProjectInput)
-          : await updateProjectAction(project!.id, data as UpdateProjectInput)
+    const result =
+      mode === 'create'
+        ? createProject({
+            name: (data as CreateProjectInput).name,
+            customer: (data as CreateProjectInput).customer ?? null,
+            user_id: MOCK_USER_ID,
+          })
+        : updateProject(project!.id, {
+            name: data.name,
+            customer: (data as UpdateProjectInput).customer ?? null,
+          })
 
-      if (result.error) {
-        setError('root', { message: result.error })
-        return
-      }
-      reset()
-      onSuccess()
-    })
+    if (result.error) {
+      setError('root', { message: result.error })
+      return
+    }
+    reset()
+    onSuccess()
   }
 
   const handleOpenChange = (val: boolean) => {
-    if (!isPending) {
+    if (!isSubmitting) {
       reset()
       onOpenChange(val)
     }
@@ -122,20 +127,20 @@ export default function ProjectFormDialog({
             <button
               type="button"
               onClick={() => handleOpenChange(false)}
-              disabled={isPending}
+              disabled={isSubmitting}
               className="border border-border rounded-[5px] px-[14px] py-[6px] text-xs text-muted-foreground bg-transparent cursor-pointer font-[inherit] transition-colors"
             >
               Отмена
             </button>
             <button
               type="submit"
-              disabled={isPending}
+              disabled={isSubmitting}
               className={cn(
                 'border-none rounded-[5px] px-[16px] py-[6px] text-xs text-white font-medium font-[inherit] transition-colors',
-                isPending ? 'bg-[var(--text-3)] cursor-not-allowed' : 'bg-[var(--accent)] cursor-pointer',
+                isSubmitting ? 'bg-[var(--text-3)] cursor-not-allowed' : 'bg-[var(--accent)] cursor-pointer',
               )}
             >
-              {isPending ? 'Сохранение…' : 'Сохранить'}
+              Сохранить
             </button>
           </DialogFooter>
         </form>

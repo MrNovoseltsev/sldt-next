@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useRouter } from 'next/navigation'
 import {
   Dialog,
   DialogContent,
@@ -16,7 +15,7 @@ import {
   type UpdateProfileInput,
   type ChangePasswordInput,
 } from '@/lib/validations/user'
-import { updateProfileAction, changePasswordAction } from '@/app/actions/user'
+import { useMockAuth } from '@/lib/mock-auth/MockAuthContext'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -34,10 +33,8 @@ const labelClass = 'text-[11px] text-muted-foreground'
 const errorClass = 'text-[11px] text-destructive'
 
 export function AccountSettingsDialog({ email, fullName, open, onOpenChange }: Props) {
-  const router = useRouter()
+  const { updateProfile, changePassword } = useMockAuth()
   const [showPassword, setShowPassword] = useState(false)
-  const [profilePending, startProfileTransition] = useTransition()
-  const [passwordPending, startPasswordTransition] = useTransition()
 
   const profileForm = useForm<UpdateProfileInput>({
     resolver: zodResolver(updateProfileSchema),
@@ -49,6 +46,9 @@ export function AccountSettingsDialog({ email, fullName, open, onOpenChange }: P
     defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' },
   })
 
+  const profilePending = profileForm.formState.isSubmitting
+  const passwordPending = passwordForm.formState.isSubmitting
+
   const handleOpenChange = (val: boolean) => {
     if (profilePending || passwordPending) return
     if (!val) {
@@ -59,30 +59,23 @@ export function AccountSettingsDialog({ email, fullName, open, onOpenChange }: P
   }
 
   const onProfileSubmit = (data: UpdateProfileInput) => {
-    startProfileTransition(async () => {
-      const result = await updateProfileAction(data.name)
-      if (result.error) {
-        profileForm.setError('root', { message: result.error })
-        return
-      }
-      router.refresh()
-    })
+    const result = updateProfile(data.name)
+    if (result.error) {
+      profileForm.setError('root', { message: result.error })
+    }
   }
 
   const onPasswordSubmit = (data: ChangePasswordInput) => {
-    startPasswordTransition(async () => {
-      const result = await changePasswordAction({
-        email,
-        currentPassword: data.currentPassword,
-        newPassword: data.newPassword,
-      })
-      if (result.error) {
-        passwordForm.setError('root', { message: result.error })
-        return
-      }
-      passwordForm.reset()
-      setShowPassword(false)
+    const result = changePassword({
+      currentPassword: data.currentPassword,
+      newPassword: data.newPassword,
     })
+    if (result.error) {
+      passwordForm.setError('root', { message: result.error })
+      return
+    }
+    passwordForm.reset()
+    setShowPassword(false)
   }
 
   return (

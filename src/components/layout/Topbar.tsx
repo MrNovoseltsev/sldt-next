@@ -1,18 +1,14 @@
+'use client'
+
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { useMockAuth } from '@/lib/mock-auth/MockAuthContext'
 import { UserMenu } from '@/components/layout/UserMenu'
 
-export default async function Topbar() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+export default function Topbar() {
+  const { user } = useMockAuth()
 
   const email = user?.email ?? ''
-  const fullName =
-    (user?.user_metadata?.full_name as string | undefined) ??
-    (user?.user_metadata?.name as string | undefined) ??
-    null
+  const fullName = user?.fullName ?? null
   const initials = email.slice(0, 2).toUpperCase() || '??'
 
   return (
