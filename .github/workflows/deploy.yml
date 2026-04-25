@@ -32,10 +32,11 @@ jobs:
         env:
           NEXT_PUBLIC_BASE_PATH: /sldt-next
 
-      - name: Add .nojekyll
-        run: touch out/.nojekyll
-
-      - uses: actions/configure-pages@v5
+      - name: Prepare artifact
+        run: |
+          touch out/.nojekyll
+          echo "out/ contents:"
+          ls out/
 
       - uses: actions/upload-pages-artifact@v3
         with:
