@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import { LogOut, Settings } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
 import { cn } from '@/lib/utils'
+import { AccountSettingsDialog } from './AccountSettingsDialog'
 
 type Props = {
   email: string
@@ -35,7 +37,10 @@ function MenuItem({
 }
 
 export function UserMenu({ email, fullName, initials }: Props) {
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
   return (
+    <>
     <DropdownMenuPrimitive.Root>
       <DropdownMenuPrimitive.Trigger asChild>
         <div className="w-7 h-7 rounded-full bg-accent text-[var(--accent)] text-[11px] font-semibold flex items-center justify-center border border-border cursor-pointer shrink-0 outline-none">
@@ -55,7 +60,7 @@ export function UserMenu({ email, fullName, initials }: Props) {
 
           <DropdownMenuPrimitive.Separator className="h-px bg-border my-0.5" />
 
-          <MenuItem disabled>
+          <MenuItem onSelect={() => setSettingsOpen(true)}>
             <Settings size={14} />
             Настройки учётной записи
           </MenuItem>
@@ -69,5 +74,12 @@ export function UserMenu({ email, fullName, initials }: Props) {
         </DropdownMenuPrimitive.Content>
       </DropdownMenuPrimitive.Portal>
     </DropdownMenuPrimitive.Root>
+    <AccountSettingsDialog
+      email={email}
+      fullName={fullName}
+      open={settingsOpen}
+      onOpenChange={setSettingsOpen}
+    />
+    </>
   )
 }
