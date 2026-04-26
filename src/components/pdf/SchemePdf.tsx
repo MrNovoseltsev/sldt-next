@@ -1,5 +1,6 @@
 import { Document, Page, View, Text, StyleSheet, Font } from '@react-pdf/renderer'
 import type { SchemeRow, SchemeLineRow, ProjectRow } from '@/types/database'
+import type { SchemeTotals } from '@/lib/calculations/electrical'
 
 Font.register({
   family: 'Roboto',
@@ -231,9 +232,10 @@ interface SchemePdfProps {
   scheme: SchemeRow
   lines: SchemeLineRow[]
   project: ProjectRow
+  totals: SchemeTotals
 }
 
-export default function SchemePdf({ scheme, lines, project }: SchemePdfProps) {
+export default function SchemePdf({ scheme, lines, project, totals }: SchemePdfProps) {
   const schemeName = scheme.device_name ?? 'Без названия'
   const today = formatDate(new Date().toISOString())
 
@@ -289,14 +291,14 @@ export default function SchemePdf({ scheme, lines, project }: SchemePdfProps) {
           {/* RIGHT — Нагрузки */}
           <View style={s.block}>
             <Text style={s.blockHeader}>Итоговые нагрузки</Text>
-            <FR label="Sуст, кВА" value={fmt(scheme.installed_power_kva)} calculated />
-            <FR label="Iуст, А" value={fmt(scheme.installed_power_current)} calculated />
-            <FR label="Sрасч, кВА" value={fmt(scheme.calculated_power_kva)} calculated />
-            <FR label="Iрасч, А" value={fmt(scheme.calculated_current)} calculated />
+            <FR label="Sуст, кВА" value={fmt(totals.installedPowerKva)} calculated />
+            <FR label="Iуст, А" value={fmt(totals.installedCurrent)} calculated />
+            <FR label="Sрасч, кВА" value={fmt(totals.calculatedPowerKva)} calculated />
+            <FR label="Iрасч, А" value={fmt(totals.calculatedCurrent)} calculated />
             <FR label="Ксп" value={val(scheme.demand_coefficient, '1')} />
-            <FR label="Iф А, А" value={fmt(scheme.current_phase_a)} calculated />
-            <FR label="Iф В, А" value={fmt(scheme.current_phase_b)} calculated />
-            <FR label="Iф С, А" value={fmt(scheme.current_phase_c)} calculated />
+            <FR label="Iф А, А" value={fmt(totals.phaseA)} calculated />
+            <FR label="Iф В, А" value={fmt(totals.phaseB)} calculated />
+            <FR label="Iф С, А" value={fmt(totals.phaseC)} calculated />
           </View>
         </View>
 

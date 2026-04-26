@@ -2,6 +2,8 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import { createClient } from '@/lib/supabase/server'
 import { getScheme, getSchemeLines, getProject } from '@/lib/supabase/queries'
 import SchemePdf from '@/components/pdf/SchemePdf'
+import { calcSchemeTotals } from '@/lib/calculations/electrical'
+import type { PhasesCount } from '@/types/enums'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,8 +28,12 @@ export async function GET(
     return new Response('Объект не найден', { status: 404 })
   }
 
+  const phases: PhasesCount = scheme.phases_count === 1 ? 1 : 3
+  const demandCoef = scheme.demand_coefficient ?? 1
+  const totals = calcSchemeTotals(lines ?? [], phases, demandCoef)
+
   const buffer = await renderToBuffer(
-    <SchemePdf scheme={scheme} lines={lines ?? []} project={project} />,
+    <SchemePdf scheme={scheme} lines={lines ?? []} project={project} totals={totals} />,
   )
 
   const filename = encodeURIComponent(scheme.device_name ?? 'scheme')
